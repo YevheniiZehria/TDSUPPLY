@@ -1,0 +1,24 @@
+[
+  {
+    "userId": "user-1779484070055-8xxm",
+    "userEmail": "client@tdsupply.ro",
+    "userName": "Cabinet Demo",
+    "items": [
+      {
+        "id": "prot-002",
+        "slug": "pilon-angulat-17-nc",
+        "name": "Pilon angulat 17° NC",
+        "price": 26.5,
+        "currency": "USD",
+        "unit": "buc",
+        "quantity": 1
+      }
+    ],
+    "total": 26.5,
+    "currency": "USD",
+    "id": "ord-1779484179825-kqbqv",
+    "status": "pending",
+    "createdAt": "2026-05-22T21:09:39.825Z",
+    "updatedAt": "2026-05-22T21:09:39.825Z"
+  }
+]
