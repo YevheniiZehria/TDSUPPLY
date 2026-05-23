@@ -19,16 +19,21 @@ import { MailModule } from './mail/mail.module';
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
-      useFactory: (config: ConfigService) => ({
-        type: 'postgres',
-        host: config.get<string>('DB_HOST', 'localhost'),
-        port: config.get<number>('DB_PORT', 5432),
-        username: config.get<string>('DB_USER', 'postgres'),
-        password: config.get<string>('DB_PASS', 'postgres'),
-        database: config.get<string>('DB_NAME', 'distrident_db'),
-        autoLoadEntities: true,
-        synchronize: config.get<boolean>('DB_SYNC', true), // Doar pentru dezvoltare!
-      }),
+      useFactory: (config: ConfigService) => {
+        const host = config.get<string>('DB_HOST', 'localhost');
+        const isLocal = host === 'localhost' || host === '127.0.0.1';
+        return {
+          type: 'postgres',
+          host,
+          port: config.get<number>('DB_PORT', 5432),
+          username: config.get<string>('DB_USER', 'postgres'),
+          password: config.get<string>('DB_PASS', 'postgres'),
+          database: config.get<string>('DB_NAME', 'distrident_db'),
+          autoLoadEntities: true,
+          synchronize: config.get<boolean>('DB_SYNC', isLocal),
+          ssl: isLocal ? false : { rejectUnauthorized: false },
+        };
+      },
     }),
     ServeStaticModule.forRoot({
       rootPath: join(__dirname, '..', 'public'),
