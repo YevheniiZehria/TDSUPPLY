@@ -21,6 +21,7 @@ import { MailModule } from './mail/mail.module';
       inject: [ConfigService],
       useFactory: (config: ConfigService) => {
         const host = config.get<string>('DB_HOST', 'localhost');
+        const isSocket = host.startsWith('/');
         const isLocal = host === 'localhost' || host === '127.0.0.1';
         return {
           type: 'postgres',
@@ -30,8 +31,8 @@ import { MailModule } from './mail/mail.module';
           password: config.get<string>('DB_PASS', 'postgres'),
           database: config.get<string>('DB_NAME', 'distrident_db'),
           autoLoadEntities: true,
-          synchronize: config.get<boolean>('DB_SYNC', isLocal),
-          ssl: isLocal ? false : { rejectUnauthorized: false },
+          synchronize: config.get<boolean>('DB_SYNC', isLocal || isSocket),
+          ssl: (isLocal || isSocket) ? false : { rejectUnauthorized: false },
         };
       },
     }),
