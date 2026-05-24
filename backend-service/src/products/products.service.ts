@@ -474,10 +474,14 @@ export class ProductsService implements OnModuleInit {
     // Fetch all existing products to check code and slug in memory (prevents N+1 database queries)
     const allProducts = await this.productRepo.find();
     const existingMap = new Map<string, ProductEntity>(
-      allProducts.map(p => [p.code.toUpperCase(), p])
+      allProducts
+        .filter(p => p && p.code)
+        .map(p => [p.code.toUpperCase(), p])
     );
     const slugSet = new Set<string>(
-      allProducts.map(p => p.slug.toLowerCase())
+      allProducts
+        .filter(p => p && p.slug)
+        .map(p => p.slug.toLowerCase())
     );
 
     const productsToSave: ProductEntity[] = [];
@@ -512,6 +516,10 @@ export class ProductsService implements OnModuleInit {
           id,
           slug: finalSlug,
         });
+
+        // Adaugă produsul nou creat în mapă pentru a preveni inserări duplicate 
+        // dacă în Excel există rânduri duplicate cu același cod
+        existingMap.set(upperCode, productToSave);
       } else {
         productToSave = existing;
         Object.assign(productToSave, {
