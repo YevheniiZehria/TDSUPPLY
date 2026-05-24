@@ -471,21 +471,33 @@ export class ProductsService implements OnModuleInit {
       }
     }
 
+    // Fetch all existing products to check code and slug in memory (prevents N+1 database queries)
+    const allProducts = await this.productRepo.find();
+    const existingMap = new Map<string, ProductEntity>(
+      allProducts.map(p => [p.code.toUpperCase(), p])
+    );
+    const slugSet = new Set<string>(
+      allProducts.map(p => p.slug.toLowerCase())
+    );
+
+    const productsToSave: ProductEntity[] = [];
     let importedCount = 0;
+
     for (const p of parsedProducts) {
-      const slug = toSlug(p.name.ro);
+      const upperCode = p.code.toUpperCase();
+      const existing = existingMap.get(upperCode);
       let productToSave: ProductEntity;
-      const existing = await this.productRepo.findOne({ where: { code: p.code } });
-      
+
       if (!existing) {
-        let slugExists = await this.productRepo.findOne({ where: { slug } });
+        const slug = toSlug(p.name.ro);
         let finalSlug = slug;
         let count = 1;
-        while (slugExists) {
+        while (slugSet.has(finalSlug.toLowerCase())) {
           finalSlug = `${slug}-${count}`;
-          slugExists = await this.productRepo.findOne({ where: { slug: finalSlug } });
           count++;
         }
+        // Rezervă slug-ul pentru a preveni coliziuni în cadrul aceluiași import
+        slugSet.add(finalSlug.toLowerCase());
 
         const id = `prod-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
         productToSave = this.productRepo.create({
@@ -512,8 +524,13 @@ export class ProductsService implements OnModuleInit {
           tags: p.tags,
         });
       }
-      await this.productRepo.save(productToSave);
+      productsToSave.push(productToSave);
       importedCount++;
+    }
+
+    // Salvează toate produsele în mod eficient într-o singură operație bulk / tranzacție
+    if (productsToSave.length > 0) {
+      await this.productRepo.save(productsToSave);
     }
 
     return { importedCount };
