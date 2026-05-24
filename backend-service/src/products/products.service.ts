@@ -484,7 +484,7 @@ export class ProductsService implements OnModuleInit {
         .map(p => p.slug.toLowerCase())
     );
 
-    const productsToSave: ProductEntity[] = [];
+    const productsToSaveMap = new Map<string, ProductEntity>();
     let importedCount = 0;
 
     for (const p of parsedProducts) {
@@ -532,9 +532,11 @@ export class ProductsService implements OnModuleInit {
           tags: p.tags,
         });
       }
-      productsToSave.push(productToSave);
+      productsToSaveMap.set(upperCode, productToSave);
       importedCount++;
     }
+
+    const productsToSave = Array.from(productsToSaveMap.values());
 
     // Salvează toate produsele în mod eficient într-o singură operație bulk / tranzacție
     if (productsToSave.length > 0) {
