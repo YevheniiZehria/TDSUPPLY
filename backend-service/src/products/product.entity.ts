@@ -32,6 +32,9 @@ export class ProductEntity {
   @Column({ nullable: true })
   image: string;
 
+  @Column({ nullable: true })
+  video: string;
+
   @Column({ default: true })
   inStock: boolean;
 

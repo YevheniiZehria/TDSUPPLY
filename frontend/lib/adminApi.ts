@@ -80,6 +80,28 @@ export async function adminUploadImage(file: File): Promise<{ url: string }> {
   return res.json() as Promise<{ url: string }>;
 }
 
+/** Upload video */
+export async function adminUploadVideo(file: File): Promise<{ url: string }> {
+  const token = getToken();
+  const formData = new FormData();
+  formData.append('file', file);
+
+  const res = await fetch(`${BASE}/uploads/video`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+    body: formData,
+  });
+
+  if (!res.ok) {
+    const body = await res.text();
+    throw new Error(body || `HTTP ${res.status}`);
+  }
+
+  return res.json() as Promise<{ url: string }>;
+}
+
 /** Verifică autentificare */
 export function adminGetMe(): Promise<{ email: string; role: string }> {
   return adminFetch('/admin/auth/me');

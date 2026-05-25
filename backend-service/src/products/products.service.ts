@@ -206,6 +206,7 @@ export class ProductsService implements OnModuleInit {
       slug,
       currency: dto.currency ?? 'USD',
       image: dto.image ?? '',
+      video: dto.video ?? '',
       inStock: dto.inStock ?? true,
       featured: dto.featured ?? false,
       tags: dto.tags ?? [],

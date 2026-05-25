@@ -127,7 +127,8 @@ export default function ProductPage() {
 
           {/* Product detail */}
           {product && !loading && (
-            <div className="product-detail-grid">
+            <>
+              <div className="product-detail-grid">
               {/* Left — imagine */}
               <div className="product-detail-image-col">
                 <div className="product-detail-image-wrap">
@@ -244,7 +245,53 @@ export default function ProductPage() {
                 </Link>
               </div>
             </div>
-          )}
+
+            {/* Video Prezentare */}
+            {product.video && (
+              <div className="product-video-section animate-in">
+                <h2 className="product-video-title">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" style={{ color: 'var(--primary)', marginRight: 8 }}>
+                    <polygon points="23 7 16 12 23 17 23 7"/>
+                    <rect x="1" y="5" width="15" height="14" rx="2" ry="2"/>
+                  </svg>
+                  {lang === 'ro' ? 'Prezentare Video' : 'Video Presentation'}
+                </h2>
+                <div className="product-video-wrapper">
+                  {product.video.includes('youtube.com') || product.video.includes('youtu.be') ? (
+                    (() => {
+                      let videoId = '';
+                      if (product.video.includes('youtu.be/')) {
+                        videoId = product.video.split('youtu.be/')[1]?.split(/[?#]/)[0] || '';
+                      } else if (product.video.includes('embed/')) {
+                        videoId = product.video.split('embed/')[1]?.split(/[?#]/)[0] || '';
+                      } else if (product.video.includes('v=')) {
+                        videoId = product.video.split('v=')[1]?.split(/[&?#]/)[0] || '';
+                      }
+                      const embedUrl = `https://www.youtube.com/embed/${videoId}`;
+                      return (
+                        <iframe
+                          src={embedUrl}
+                          title="YouTube video player"
+                          frameBorder="0"
+                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                          allowFullScreen
+                          style={{ width: '100%', height: '100%' }}
+                        />
+                      );
+                    })()
+                  ) : (
+                    <video
+                      src={getProductImageUrl(product.video)}
+                      controls
+                      preload="metadata"
+                      className="product-video-element"
+                    />
+                  )}
+                </div>
+              </div>
+            )}
+          </>
+        )}
         </div>
       </main>
       <Footer lang={lang} />

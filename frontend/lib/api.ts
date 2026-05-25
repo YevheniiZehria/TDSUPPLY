@@ -6,7 +6,7 @@ export interface Product {
   name: ProductName; category: string;
   description: ProductName;
   price: number; currency: string; unit: string;
-  image: string; inStock: boolean; featured: boolean;
+  image: string; video?: string; inStock: boolean; featured: boolean;
   tags: string[]; createdAt: string; updatedAt: string;
 }
 export interface ProductStats {

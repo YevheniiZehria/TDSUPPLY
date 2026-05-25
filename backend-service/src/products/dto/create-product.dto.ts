@@ -54,6 +54,11 @@ export class CreateProductDto {
   @IsString()
   image?: string;
 
+  @ApiPropertyOptional({ default: '' })
+  @IsOptional()
+  @IsString()
+  video?: string;
+
   @ApiPropertyOptional({ default: true })
   @IsOptional()
   @IsBoolean()

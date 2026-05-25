@@ -3,8 +3,8 @@
 import { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import AdminLayout from '@/components/AdminLayout';
-import { adminGetProductById, adminUpdateProduct, adminDeleteProduct, adminUploadImage } from '@/lib/adminApi';
-import type { Product } from '@/lib/api';
+import { adminGetProductById, adminUpdateProduct, adminDeleteProduct, adminUploadImage, adminUploadVideo } from '@/lib/adminApi';
+import { getProductImageUrl, type Product } from '@/lib/api';
 
 const CATEGORIES = [
   { id: 'zirconia', label: 'Discuri Zirconia' },
@@ -23,7 +23,13 @@ export default function EditProductPage() {
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  
   const [uploading, setUploading] = useState(false);
+  const [imageDragging, setImageDragging] = useState(false);
+  
+  const [videoUploading, setVideoUploading] = useState(false);
+  const [videoDragging, setVideoDragging] = useState(false);
+  
   const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState('');
   const [confirmDelete, setConfirmDelete] = useState(false);
@@ -34,7 +40,7 @@ export default function EditProductPage() {
     category: 'zirconia',
     descRo: '', descEn: '',
     price: '', currency: 'USD', unit: 'buc',
-    image: '', inStock: true, featured: false,
+    image: '', video: '', inStock: true, featured: false,
     tags: '',
   });
 
@@ -49,7 +55,7 @@ export default function EditProductPage() {
           category: p.category,
           descRo: p.description.ro, descEn: p.description.en,
           price: String(p.price), currency: p.currency, unit: p.unit,
-          image: p.image, inStock: p.inStock, featured: p.featured ?? false,
+          image: p.image, video: p.video ?? '', inStock: p.inStock, featured: p.featured ?? false,
           tags: p.tags.join(', '),
         });
       })
@@ -65,10 +71,7 @@ export default function EditProductPage() {
     setForm(prev => ({ ...prev, [field]: value }));
   }
 
-  async function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
+  async function handleImageUpload(file: File) {
     setUploading(true);
     setError('');
     try {
@@ -78,6 +81,88 @@ export default function EditProductPage() {
       setError('Eroare la încărcarea imaginii.');
     } finally {
       setUploading(false);
+    }
+  }
+
+  function handleImageFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (file) handleImageUpload(file);
+  }
+
+  function handleImageDragOver(e: React.DragEvent) {
+    e.preventDefault();
+    setImageDragging(true);
+  }
+
+  function handleImageDragLeave() {
+    setImageDragging(false);
+  }
+
+  function handleImageDrop(e: React.DragEvent) {
+    e.preventDefault();
+    setImageDragging(false);
+    const file = e.dataTransfer.files?.[0];
+    if (file) {
+      if (!file.type.startsWith('image/')) {
+        setError('Doar fișierele imagine sunt permise.');
+        return;
+      }
+      handleImageUpload(file);
+    }
+  }
+
+  function handleImagePaste(e: React.ClipboardEvent) {
+    const items = e.clipboardData?.items;
+    if (!items) return;
+    for (let i = 0; i < items.length; i++) {
+      if (items[i].type.indexOf('image') !== -1) {
+        const file = items[i].getAsFile();
+        if (file) {
+          e.preventDefault();
+          handleImageUpload(file);
+          break;
+        }
+      }
+    }
+  }
+
+  async function handleVideoUpload(file: File) {
+    setVideoUploading(true);
+    setError('');
+    try {
+      const { url } = await adminUploadVideo(file);
+      set('video', url);
+    } catch (err) {
+      setError('Eroare la încărcarea videoclipului.');
+    } finally {
+      setVideoUploading(false);
+    }
+  }
+
+  function handleVideoFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (file) handleVideoUpload(file);
+  }
+
+  function handleVideoDragOver(e: React.DragEvent) {
+    e.preventDefault();
+    setVideoDragging(true);
+  }
+
+  function handleVideoDragLeave() {
+    setVideoDragging(false);
+  }
+
+  function handleVideoDrop(e: React.DragEvent) {
+    e.preventDefault();
+    setVideoDragging(false);
+    const file = e.dataTransfer.files?.[0];
+    if (file) {
+      if (!file.type.startsWith('video/')) {
+        setError('Doar fișierele video sunt permise.');
+        return;
+      }
+      handleVideoUpload(file);
     }
   }
 
@@ -95,6 +180,7 @@ export default function EditProductPage() {
         currency: form.currency,
         unit: form.unit,
         image: form.image,
+        video: form.video,
         inStock: form.inStock,
         featured: form.featured,
         tags: form.tags.split(',').map(t => t.trim()).filter(Boolean),
@@ -209,28 +295,111 @@ export default function EditProductPage() {
           </div>
 
           <div className="admin-form-section">
-            <h3 className="admin-form-section-title">Extra</h3>
+            <h3 className="admin-form-section-title">Medii & Etichete</h3>
             <div className="admin-field">
               <label className="admin-label">Tags (separate prin virgulă)</label>
               <input className="admin-input" value={form.tags} onChange={e => set('tags', e.target.value)} />
             </div>
-            <div className="admin-field">
-              <label className="admin-label">Imagine produs</label>
-              <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+            
+            <div className="admin-field" style={{ marginTop: 8 }}>
+              <label className="admin-label">Imagine produs (Drag & Drop, Paste sau Click pentru selectare)</label>
+              <div
+                className={`admin-upload-zone ${imageDragging ? 'dragging' : ''}`}
+                onDragOver={handleImageDragOver}
+                onDragLeave={handleImageDragLeave}
+                onDrop={handleImageDrop}
+                onPaste={handleImagePaste}
+                tabIndex={0}
+                style={{ outline: 'none' }}
+              >
+                {uploading ? (
+                  <>
+                    <div className="login-spinner" style={{ width: 24, height: 24, borderColor: 'var(--border)', borderTopColor: 'var(--accent)' }} />
+                    <span className="admin-upload-zone-text">Se încarcă imaginea...</span>
+                  </>
+                ) : (
+                  <>
+                    <span className="admin-upload-zone-icon">🖼️</span>
+                    <span className="admin-upload-zone-text">
+                      Trage imaginea aici, dă <strong>Paste (Ctrl+V)</strong> sau <strong>click</strong> pentru a alege fișierul
+                    </span>
+                    <span className="admin-upload-zone-hint">PNG, JPG, JPEG, WEBP, GIF (Max. 5MB)</span>
+                  </>
+                )}
+                <input type="file" id="image-file-input" hidden accept="image/*" onChange={handleImageFileChange} disabled={uploading} />
+                <label htmlFor="image-file-input" style={{ position: 'absolute', inset: 0, cursor: 'pointer', zIndex: 1 }} />
+              </div>
+              
+              {form.image && (
+                <div className="admin-upload-preview-container" style={{ marginTop: 8 }}>
+                  <div className="admin-upload-preview-wrapper" style={{ position: 'relative', zIndex: 2 }}>
+                    <img src={getProductImageUrl(form.image)} alt="Preview" className="admin-upload-preview-media" />
+                    <div className="admin-upload-preview-info">
+                      <span className="admin-upload-preview-url">{form.image}</span>
+                    </div>
+                    <div className="admin-upload-preview-actions">
+                      <button type="button" className="admin-action-icon-btn delete" title="Șterge imagine" onClick={() => set('image', '')}>🗑️</button>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div className="admin-field" style={{ marginTop: 16 }}>
+              <label className="admin-label">Videoclip produs (Drag & Drop sau Link YouTube)</label>
+              <div style={{ display: 'flex', gap: 12, alignItems: 'center', marginBottom: 12 }}>
                 <input
                   className="admin-input"
-                  placeholder="/public/products/imagine.jpg"
-                  value={form.image}
-                  onChange={e => set('image', e.target.value)}
+                  style={{ flex: 1 }}
+                  placeholder="Ex: https://www.youtube.com/watch?v=... sau trage un fișier video mai jos"
+                  value={form.video}
+                  onChange={e => set('video', e.target.value)}
                 />
-                <label className={`btn-ghost ${uploading ? 'disabled' : ''}`} style={{ cursor: 'pointer', padding: '8px 16px', borderRadius: 8, whiteSpace: 'nowrap' }}>
-                  {uploading ? 'Se încarcă...' : 'Încarcă fișier'}
-                  <input type="file" hidden accept="image/*" onChange={handleFileChange} disabled={uploading} />
-                </label>
               </div>
-              {form.image && (
-                <div style={{ marginTop: 8 }}>
-                  <img src={form.image} alt="Preview" style={{ height: 60, borderRadius: 4, border: '1px solid var(--border)' }} />
+
+              <div
+                className={`admin-upload-zone ${videoDragging ? 'dragging' : ''}`}
+                onDragOver={handleVideoDragOver}
+                onDragLeave={handleVideoDragLeave}
+                onDrop={handleVideoDrop}
+                tabIndex={0}
+                style={{ outline: 'none' }}
+              >
+                {videoUploading ? (
+                  <>
+                    <div className="login-spinner" style={{ width: 24, height: 24, borderColor: 'var(--border)', borderTopColor: 'var(--accent)' }} />
+                    <span className="admin-upload-zone-text">Se încarcă videoclipul...</span>
+                  </>
+                ) : (
+                  <>
+                    <span className="admin-upload-zone-icon">🎥</span>
+                    <span className="admin-upload-zone-text">
+                      Trage fișierul video aici sau <strong>click</strong> pentru a selecta
+                    </span>
+                    <span className="admin-upload-zone-hint">MP4, WEBM, OGG, MOV (Max. 50MB)</span>
+                  </>
+                )}
+                <input type="file" id="video-file-input" hidden accept="video/*" onChange={handleVideoFileChange} disabled={videoUploading} />
+                <label htmlFor="video-file-input" style={{ position: 'absolute', inset: 0, cursor: 'pointer', zIndex: 1 }} />
+              </div>
+              
+              {form.video && (
+                <div className="admin-upload-preview-container" style={{ marginTop: 8 }}>
+                  <div className="admin-upload-preview-wrapper" style={{ position: 'relative', zIndex: 2 }}>
+                    {form.video.includes('youtube.com') || form.video.includes('youtu.be') ? (
+                      <div className="admin-upload-preview-media" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, background: '#FF0000', color: '#FFF', fontWeight: 'bold' }}>
+                        YT
+                      </div>
+                    ) : (
+                      <video src={getProductImageUrl(form.video)} className="admin-upload-preview-media" muted />
+                    )}
+                    <div className="admin-upload-preview-info">
+                      <span className="admin-upload-preview-url">{form.video}</span>
+                    </div>
+                    <div className="admin-upload-preview-actions">
+                      <button type="button" className="admin-action-icon-btn delete" title="Șterge video" onClick={() => set('video', '')}>🗑️</button>
+                    </div>
+                  </div>
                 </div>
               )}
             </div>

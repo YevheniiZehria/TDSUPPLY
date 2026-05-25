@@ -71,4 +71,59 @@ export class UploadsController {
       url: `/public/products/${file.filename}`,
     };
   }
+
+  @Post('video')
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('admin', 'superadmin')
+  @ApiOperation({ summary: 'Upload video produs (admin)' })
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        file: {
+          type: 'string',
+          format: 'binary',
+        },
+      },
+    },
+  })
+  @UseInterceptors(
+    FileInterceptor('file', {
+      storage: diskStorage({
+        destination: (req, file, cb) => {
+          const uploadPath = join(process.cwd(), 'public', 'products');
+          if (!existsSync(uploadPath)) {
+            mkdirSync(uploadPath, { recursive: true });
+          }
+          cb(null, uploadPath);
+        },
+        filename: (req, file, cb) => {
+          const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
+          cb(null, `prod-video-${uniqueSuffix}${extname(file.originalname)}`);
+        },
+      }),
+      fileFilter: (req, file, cb) => {
+        if (
+          !file.mimetype.match(/\/(mp4|webm|ogg|quicktime|x-matroska)$/) &&
+          !file.originalname.match(/\.(mp4|webm|ogg|mov|mkv)$/i)
+        ) {
+          return cb(new BadRequestException('Doar fișiere video sunt permise!'), false);
+        }
+        cb(null, true);
+      },
+      limits: {
+        fileSize: 50 * 1024 * 1024, // 50MB
+      },
+    }),
+  )
+  uploadVideo(@UploadedFile() file: Express.Multer.File) {
+    if (!file) {
+      throw new BadRequestException('Niciun fișier încărcat.');
+    }
+    return {
+      url: `/public/products/${file.filename}`,
+    };
+  }
 }
