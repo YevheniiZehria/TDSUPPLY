@@ -5,6 +5,7 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import ProductCard from '@/components/ProductCard';
+import CategoryIcon from '@/components/CategoryIcon';
 import { CATEGORIES } from '@/data/catalog';
 import { fetchProducts, type Product } from '@/lib/api';
 
@@ -154,7 +155,10 @@ function CatalogContent() {
                     onClick={() => setActiveCategory(cat.id)}
                     id={`filter-${cat.id}`}
                   >
-                    <span>{cat.icon} {cat.name[lang]}</span>
+                    <span className="filter-item-label">
+                      <CategoryIcon categoryId={cat.id} size={14} className="filter-cat-icon" />
+                      {cat.name[lang]}
+                    </span>
                     <span className="filter-count">{catCounts[cat.id] ?? 0}</span>
                   </li>
                 ))}
@@ -184,9 +188,13 @@ function CatalogContent() {
                     <div key={i} className="product-card" style={{ minHeight: 280, background: 'var(--surface-2)' }} />
                   ))}
                 </div>
-              ) : filtered.length === 0 ? (
+                ) : filtered.length === 0 ? (
                 <div style={{ textAlign: 'center', padding: '60px 20px', color: 'var(--text-muted)' }}>
-                  <div style={{ fontSize: '48px', marginBottom: '16px' }}>🔍</div>
+                  <div style={{ marginBottom: '16px', display: 'flex', justifyContent: 'center' }}>
+                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4" opacity="0.35">
+                      <circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/>
+                    </svg>
+                  </div>
                   <p>{txt.noResults}</p>
                 </div>
               ) : (

@@ -5,6 +5,7 @@ import Link from 'next/link';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import ProductCard from '@/components/ProductCard';
+import CategoryIcon from '@/components/CategoryIcon';
 import { CATEGORIES } from '@/data/catalog';
 import { fetchProducts, fetchSiteStats, type Product, type SiteStats } from '@/lib/api';
 
@@ -252,7 +253,7 @@ export default function HomePage() {
                   className="category-card"
                   id={`cat-${cat.slug}`}
                 >
-                  <span className="category-icon">{cat.icon}</span>
+                  <CategoryIcon categoryId={cat.id} size={36} className="category-icon" />
                   <div className="category-name">{cat.name[lang]}</div>
                   <div className="category-count">
                     {categoryCounts[cat.id] ?? 0} {lang === 'ro' ? 'produse' : 'products'}

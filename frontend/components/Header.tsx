@@ -7,6 +7,7 @@ import { useUser } from '@/contexts/UserContext';
 import { useCart } from '@/contexts/CartContext';
 import { CATEGORIES } from '@/data/catalog';
 import CartDrawer from './CartDrawer';
+import CategoryIcon from './CategoryIcon';
 import { fetchSiteSettings, type SiteSettings } from '@/lib/api';
 
 interface HeaderProps {
@@ -230,7 +231,7 @@ function HeaderContent({ lang, onLangChange }: HeaderProps) {
             </Link>
             {CATEGORIES.map((cat) => (
               <Link key={cat.id} href={`/catalog?cat=${cat.id}`} className="nav-item">
-                <span className="nav-icon">{cat.icon}</span>
+                <CategoryIcon categoryId={cat.id} size={16} className="nav-icon" />
                 {cat.name[lang]}
               </Link>
             ))}
