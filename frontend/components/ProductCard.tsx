@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import Image from 'next/image';
 import { useUser } from '@/contexts/UserContext';
 import { useCart } from '@/contexts/CartContext';
 import { formatCurrency, getProductImageUrl, type Product } from '@/lib/api';
@@ -43,13 +42,12 @@ export default function ProductCard({ product, lang }: ProductCardProps) {
       {/* Image */}
       <div className="product-image-wrap">
         {showImage ? (
-          <Image
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
             src={getProductImageUrl(product.image)}
             alt={name}
-            fill
-            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
             className="product-image"
-            style={{ objectFit: 'cover' }}
+            style={{ objectFit: 'cover', width: '100%', height: '100%', position: 'absolute', inset: 0 }}
             onError={() => setShowImage(false)}
           />
         ) : (

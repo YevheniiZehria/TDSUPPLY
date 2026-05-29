@@ -3,10 +3,9 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
-import Image from 'next/image';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
-import { fetchProductBySlug, formatCurrency, getProductImageUrl, type Product } from '@/lib/api';
+import { fetchProductBySlug, formatCurrency, getProductImageUrl, getProductVideoUrl, type Product } from '@/lib/api';
 import { CATEGORIES } from '@/data/catalog';
 import { useUser } from '@/contexts/UserContext';
 import { useCart } from '@/contexts/CartContext';
@@ -133,13 +132,15 @@ export default function ProductPage() {
               <div className="product-detail-image-col">
                 <div className="product-detail-image-wrap">
                   {showImage ? (
-                    <Image
+                    // Folosim <img> simplu (nu Next.js <Image>) deoarece imaginile
+                    // uploadate sunt servite prin rewrite-ul Next.js /public/:path* → backend.
+                    // Next.js <Image> cu URL relativ caută fişierul în /public local şi eşuează.
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
                       src={getProductImageUrl(product.image)}
                       alt={product.name[lang]}
-                      fill
-                      sizes="(max-width: 768px) 100vw, 50vw"
                       className="product-detail-image"
-                      style={{ objectFit: 'cover' }}
+                      style={{ objectFit: 'cover', width: '100%', height: '100%', position: 'absolute', inset: 0 }}
                       onError={() => setShowImage(false)}
                     />
                   ) : (
@@ -281,7 +282,7 @@ export default function ProductPage() {
                     })()
                   ) : (
                     <video
-                      src={getProductImageUrl(product.video)}
+                      src={getProductVideoUrl(product.video)}
                       controls
                       preload="metadata"
                       className="product-video-element"

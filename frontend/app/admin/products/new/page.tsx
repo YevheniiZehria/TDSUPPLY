@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import AdminLayout from '@/components/AdminLayout';
 import { adminCreateProduct, adminUploadImage, adminUploadVideo } from '@/lib/adminApi';
-import { getProductImageUrl } from '@/lib/api';
+import { getProductImageUrl, getProductVideoUrl } from '@/lib/api';
 
 const CATEGORIES = [
   { id: 'zirconia', label: 'Discuri Zirconia' },
@@ -271,7 +271,7 @@ export default function NewProductPage() {
                     <span className="admin-upload-zone-text">
                       Trage imaginea aici, dă <strong>Paste (Ctrl+V)</strong> sau <strong>click</strong> pentru a alege fișierul
                     </span>
-                    <span className="admin-upload-zone-hint">PNG, JPG, JPEG, WEBP, GIF (Max. 5MB)</span>
+                    <span className="admin-upload-zone-hint">PNG, JPG, JPEG, WEBP, GIF (Max. 20MB)</span>
                   </>
                 )}
                 <input type="file" id="image-file-input" hidden accept="image/*" onChange={handleImageFileChange} disabled={uploading} />
@@ -339,7 +339,7 @@ export default function NewProductPage() {
                         YT
                       </div>
                     ) : (
-                      <video src={getProductImageUrl(form.video)} className="admin-upload-preview-media" muted />
+                      <video src={getProductVideoUrl(form.video)} className="admin-upload-preview-media" muted />
                     )}
                     <div className="admin-upload-preview-info">
                       <span className="admin-upload-preview-url">{form.video}</span>

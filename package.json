@@ -3,6 +3,9 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
+    "start:backend": "npm run start:dev --prefix backend-service",
+    "start:frontend": "npm run dev --prefix frontend",
+    "start": "concurrently \"npm run start:backend\" \"npm run start:frontend\"",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
@@ -16,6 +19,7 @@
     "@types/jsonwebtoken": "^9.0.10",
     "@types/morgan": "^1.9.10",
     "@types/node": "^25.9.1",
+    "concurrently": "^8.2.2",
     "ts-node": "^10.9.2",
     "typescript": "^6.0.3"
   },

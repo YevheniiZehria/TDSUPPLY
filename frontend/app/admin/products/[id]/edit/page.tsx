@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import AdminLayout from '@/components/AdminLayout';
 import { adminGetProductById, adminUpdateProduct, adminDeleteProduct, adminUploadImage, adminUploadVideo } from '@/lib/adminApi';
-import { getProductImageUrl, type Product } from '@/lib/api';
+import { getProductImageUrl, getProductVideoUrl, type Product } from '@/lib/api';
 
 const CATEGORIES = [
   { id: 'zirconia', label: 'Discuri Zirconia' },
@@ -391,7 +391,7 @@ export default function EditProductPage() {
                         YT
                       </div>
                     ) : (
-                      <video src={getProductImageUrl(form.video)} className="admin-upload-preview-media" muted />
+                      <video src={getProductVideoUrl(form.video)} className="admin-upload-preview-media" muted />
                     )}
                     <div className="admin-upload-preview-info">
                       <span className="admin-upload-preview-url">{form.video}</span>
