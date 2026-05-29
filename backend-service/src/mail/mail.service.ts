@@ -376,7 +376,8 @@ export class MailService {
   }
 
   /** Email de bun venit → trimis clientului la înregistrare */
-  async sendWelcomeEmail(to: string, userName: string) {
+  async sendWelcomeEmail(to: string, userName: string, frontendUrl?: string) {
+    const finalFrontendUrl = frontendUrl || this.config.get('FRONTEND_URL', 'http://localhost:3000');
     const html = `<!DOCTYPE html>
 <html lang="ro">
 <head><meta charset="UTF-8"></head>
@@ -395,7 +396,7 @@ export class MailService {
         Contul dumneavoastră de partener B2B a fost înregistrat cu succes pe platforma Distrident Medical. Acum puteți plasa comenzi de materiale și consumabile dentare direct din catalogul nostru.
       </p>
       <div style="text-align:center;margin-bottom:24px;">
-        <a href="${this.config.get('FRONTEND_URL', 'http://localhost:3000')}/autentificare"
+        <a href="${finalFrontendUrl}/autentificare"
            style="display:inline-block;background:#2563eb;color:#ffffff;padding:14px 36px;border-radius:8px;text-decoration:none;font-weight:600;font-size:15px;">
           Autentifică-te pe Site
         </a>

@@ -39,7 +39,36 @@ export class UserAuthService {
     };
   }
 
-  async register(email: string, password: string, name: string) {
+  private getFrontendUrl(origin?: string): string {
+    if (origin) {
+      try {
+        const url = new URL(origin);
+        if (url.protocol.startsWith('http')) {
+          return url.origin;
+        }
+      } catch {}
+    }
+
+    const frontendUrl = this.config.get<string>('FRONTEND_URL');
+    if (frontendUrl && frontendUrl !== 'http://localhost:3000') {
+      return frontendUrl;
+    }
+
+    const apiUrl = this.config.get<string>('NEXT_PUBLIC_API_URL');
+    if (apiUrl) {
+      try {
+        const url = new URL(apiUrl);
+        if (url.port === '3001') {
+          url.port = '3000';
+        }
+        return url.origin;
+      } catch {}
+    }
+
+    return 'http://localhost:3000';
+  }
+
+  async register(email: string, password: string, name: string, origin?: string) {
     const emailLower = email.toLowerCase();
     const existing = await this.userRepo.findOne({ where: { email: emailLower } });
     if (existing) {
@@ -57,7 +86,7 @@ export class UserAuthService {
     });
     const saved = await this.userRepo.save(user);
     
-    const frontendUrl = this.config.get<string>('FRONTEND_URL', 'http://localhost:3000');
+    const frontendUrl = this.getFrontendUrl(origin);
     const verificationLink = `${frontendUrl}/verify-email?token=${token}`;
 
     // Trimite email de verificare asincron
@@ -69,7 +98,7 @@ export class UserAuthService {
     return rest;
   }
 
-  async verifyEmail(token: string): Promise<{ message: string }> {
+  async verifyEmail(token: string, origin?: string): Promise<{ message: string }> {
     const user = await this.userRepo.findOne({ where: { verificationToken: token } });
     if (!user) {
       throw new BadRequestException('Token de verificare invalid sau expirat.');
@@ -79,8 +108,10 @@ export class UserAuthService {
     user.verificationToken = null;
     await this.userRepo.save(user);
 
+    const frontendUrl = this.getFrontendUrl(origin);
+
     // Trimite email de bun venit asincron după activare
-    void this.mailService.sendWelcomeEmail(user.email, user.name).catch(err => {
+    void this.mailService.sendWelcomeEmail(user.email, user.name, frontendUrl).catch(err => {
       this.userRepo.manager.connection.logger.log('log', `Eroare trimitere email bun venit: ${err.message}`);
     });
 
@@ -94,7 +125,7 @@ export class UserAuthService {
     return rest;
   }
 
-  async requestPasswordReset(email: string): Promise<{ message: string }> {
+  async requestPasswordReset(email: string, origin?: string): Promise<{ message: string }> {
     const user = await this.userRepo.findOne({
       where: { email: email.toLowerCase() },
     });
@@ -105,7 +136,7 @@ export class UserAuthService {
       user.resetTokenExpiry = new Date(Date.now() + 3600000); // 1 hour
       await this.userRepo.save(user);
 
-      const frontendUrl = this.config.get<string>('FRONTEND_URL', 'http://localhost:3000');
+      const frontendUrl = this.getFrontendUrl(origin);
       const resetLink = `${frontendUrl}/reseteaza-parola?token=${token}`;
       
       void this.mailService.sendPasswordReset(user.email, resetLink);

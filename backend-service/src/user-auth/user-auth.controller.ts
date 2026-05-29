@@ -84,14 +84,16 @@ export class UserAuthController {
     if (!isHuman) {
       throw new BadRequestException('Validarea anti-robot (captcha) a eșuat. Vă rugăm să reîncercați.');
     }
-    return this.userAuthService.register(dto.email, dto.password, dto.name);
+    const origin = req.headers.origin || req.headers.referer;
+    return this.userAuthService.register(dto.email, dto.password, dto.name, origin);
   }
 
   @Get('verify-email')
   @ApiOperation({ summary: 'Verifică emailul utilizatorului folosind tokenul primit' })
-  async verifyEmail(@Query('token') token: string) {
+  async verifyEmail(@Query('token') token: string, @Req() req: any) {
     if (!token) throw new BadRequestException('Token-ul este obligatoriu.');
-    return this.userAuthService.verifyEmail(token);
+    const origin = req.headers.origin || req.headers.referer;
+    return this.userAuthService.verifyEmail(token, origin);
   }
 
   @Post('forgot-password')
@@ -99,8 +101,9 @@ export class UserAuthController {
   @Throttle({ default: { limit: 3, ttl: 60000 } })
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Solicită resetare parolă' })
-  async forgotPassword(@Body() dto: ForgotPasswordDto) {
-    return this.userAuthService.requestPasswordReset(dto.email);
+  async forgotPassword(@Body() dto: ForgotPasswordDto, @Req() req: any) {
+    const origin = req.headers.origin || req.headers.referer;
+    return this.userAuthService.requestPasswordReset(dto.email, origin);
   }
 
   @Post('reset-password')
