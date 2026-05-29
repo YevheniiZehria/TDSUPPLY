@@ -7,7 +7,7 @@ export const metadata: Metadata = {
   title: 'TD Supply — Furnizor Premium Materiale Dentare',
   description:
     'Distribuitor B2B de materiale și echipamente stomatologice premium. Implanturi, instrumente chirurgicale, materiale de restaurare — livrare rapidă în toată România.',
-  keywords: 'materiale dentare, implanturi dentare, distribuitor stomatologie, TD Supply, dental supply',
+  keywords: 'materiale dentare, implanturi dentare, distribuitor stomatologie, TD Supply, dental supply, 123',
   openGraph: {
     title: 'TD Supply — Furnizor Premium Materiale Dentare',
     description: 'Distribuitor B2B de materiale și echipamente stomatologice premium.',
