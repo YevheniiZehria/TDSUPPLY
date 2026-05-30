@@ -6,17 +6,20 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 
 import { AdminAuthController } from './admin-auth.controller';
 import { AdminAuthService } from './admin-auth.service';
+import { AdminUsersController } from './admin-users.controller';
 import { JwtStrategy } from './jwt.strategy';
 import { RolesGuard } from './roles.guard';
 import { AdminSeedService } from './seed.service';
 import { AdminPingController } from './admin-ping.controller';
 import { AdminEntity } from './admin.entity';
+import { UserAuthModule } from '../user-auth/user-auth.module';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([AdminEntity]),
     ConfigModule,
     PassportModule,
+    UserAuthModule,
     JwtModule.registerAsync({
       inject: [ConfigService],
       useFactory: (config: ConfigService) => ({
@@ -27,7 +30,7 @@ import { AdminEntity } from './admin.entity';
       }),
     }),
   ],
-  controllers: [AdminAuthController, AdminPingController],
+  controllers: [AdminAuthController, AdminPingController, AdminUsersController],
   providers: [AdminSeedService, AdminAuthService, JwtStrategy, RolesGuard],
 })
 export class AdminAuthModule {}

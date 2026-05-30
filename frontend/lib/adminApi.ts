@@ -147,3 +147,43 @@ export async function adminImportProducts(file: File): Promise<{ importedCount: 
 
   return res.json() as Promise<{ importedCount: number }>;
 }
+
+// ─── Gestiune Utilizatori ────────────────────────────────────────────────────
+
+export interface AdminUser {
+  id: string;
+  email: string;
+  name: string;
+  role: string;
+  isVerified: boolean;
+  createdAt: string;
+  updatedAt: string;
+  orderCount: number;
+}
+
+/** Lista tuturor utilizatorilor cu numărul de comenzi */
+export function adminGetUsers(): Promise<AdminUser[]> {
+  return adminFetch<AdminUser[]>('/admin/users');
+}
+
+/** Schimbă parola unui utilizator */
+export function adminChangeUserPassword(id: string, newPassword: string): Promise<{ message: string }> {
+  return adminFetch<{ message: string }>(`/admin/users/${id}/password`, {
+    method: 'PATCH',
+    body: JSON.stringify({ newPassword }),
+  });
+}
+
+/** Activează sau dezactivează contul unui utilizator */
+export function adminToggleUserActive(id: string): Promise<{ message: string; isVerified: boolean }> {
+  return adminFetch<{ message: string; isVerified: boolean }>(`/admin/users/${id}/toggle-active`, {
+    method: 'PATCH',
+  });
+}
+
+/** Șterge un cont de utilizator */
+export function adminDeleteUser(id: string): Promise<{ message: string }> {
+  return adminFetch<{ message: string }>(`/admin/users/${id}`, {
+    method: 'DELETE',
+  });
+}

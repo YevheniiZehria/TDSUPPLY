@@ -1,4 +1,4 @@
-import { Injectable, UnauthorizedException, BadRequestException } from '@nestjs/common';
+import { Injectable, UnauthorizedException, BadRequestException, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, MoreThan } from 'typeorm';
 import { JwtService } from '@nestjs/jwt';
@@ -39,36 +39,11 @@ export class UserAuthService {
     };
   }
 
-  private getFrontendUrl(origin?: string): string {
-    if (origin) {
-      try {
-        const url = new URL(origin);
-        if (url.protocol.startsWith('http')) {
-          return url.origin;
-        }
-      } catch {}
-    }
-
-    const frontendUrl = this.config.get<string>('FRONTEND_URL');
-    if (frontendUrl && frontendUrl !== 'http://localhost:3000') {
-      return frontendUrl;
-    }
-
-    const apiUrl = this.config.get<string>('NEXT_PUBLIC_API_URL');
-    if (apiUrl) {
-      try {
-        const url = new URL(apiUrl);
-        if (url.port === '3001') {
-          url.port = '3000';
-        }
-        return url.origin;
-      } catch {}
-    }
-
-    return 'http://localhost:3000';
+  private getFrontendUrl(): string {
+    return this.config.get<string>('FRONTEND_URL', 'http://localhost:3000');
   }
 
-  async register(email: string, password: string, name: string, origin?: string) {
+  async register(email: string, password: string, name: string) {
     const emailLower = email.toLowerCase();
     const existing = await this.userRepo.findOne({ where: { email: emailLower } });
     if (existing) {
@@ -86,7 +61,7 @@ export class UserAuthService {
     });
     const saved = await this.userRepo.save(user);
     
-    const frontendUrl = this.getFrontendUrl(origin);
+    const frontendUrl = this.getFrontendUrl();
     const verificationLink = `${frontendUrl}/verify-email?token=${token}`;
 
     // Trimite email de verificare asincron
@@ -98,7 +73,7 @@ export class UserAuthService {
     return rest;
   }
 
-  async verifyEmail(token: string, origin?: string): Promise<{ message: string }> {
+  async verifyEmail(token: string): Promise<{ message: string }> {
     const user = await this.userRepo.findOne({ where: { verificationToken: token } });
     if (!user) {
       throw new BadRequestException('Token de verificare invalid sau expirat.');
@@ -108,7 +83,7 @@ export class UserAuthService {
     user.verificationToken = null;
     await this.userRepo.save(user);
 
-    const frontendUrl = this.getFrontendUrl(origin);
+    const frontendUrl = this.getFrontendUrl();
 
     // Trimite email de bun venit asincron după activare
     void this.mailService.sendWelcomeEmail(user.email, user.name, frontendUrl).catch(err => {
@@ -125,7 +100,7 @@ export class UserAuthService {
     return rest;
   }
 
-  async requestPasswordReset(email: string, origin?: string): Promise<{ message: string }> {
+  async requestPasswordReset(email: string): Promise<{ message: string }> {
     const user = await this.userRepo.findOne({
       where: { email: email.toLowerCase() },
     });
@@ -136,7 +111,7 @@ export class UserAuthService {
       user.resetTokenExpiry = new Date(Date.now() + 3600000); // 1 hour
       await this.userRepo.save(user);
 
-      const frontendUrl = this.getFrontendUrl(origin);
+      const frontendUrl = this.getFrontendUrl();
       const resetLink = `${frontendUrl}/reseteaza-parola?token=${token}`;
       
       void this.mailService.sendPasswordReset(user.email, resetLink);
@@ -176,5 +151,58 @@ export class UserAuthService {
       .where('user.createdAt >= :date', { date: thirtyDaysAgo })
       .getCount();
     return { totalUsers, recentUsers };
+  }
+
+  // ─── Metode Admin ────────────────────────────────────────────────────────────
+
+  async adminGetAllUsers(): Promise<Array<Omit<UserEntity, 'passwordHash' | 'resetToken' | 'verificationToken'> & { orderCount: number }>> {
+    const users = await this.userRepo.find({ order: { createdAt: 'DESC' } });
+
+    // Numărăm comenzile per user folosind un query raw (evităm dependința circulară cu OrdersModule)
+    const userIds = users.map(u => u.id);
+    let orderCounts: Record<string, number> = {};
+
+    if (userIds.length > 0) {
+      const rows: Array<{ userId: string; count: string }> = await this.userRepo.manager
+        .query(
+          `SELECT "userId", COUNT(*)::int as count FROM orders WHERE "userId" = ANY($1) GROUP BY "userId"`,
+          [userIds],
+        );
+      for (const row of rows) {
+        orderCounts[row.userId] = Number(row.count);
+      }
+    }
+
+    return users.map(({ passwordHash, resetToken, verificationToken, ...rest }) => ({
+      ...rest,
+      orderCount: orderCounts[rest.id] ?? 0,
+    }));
+  }
+
+  async adminChangePassword(userId: string, newPassword: string): Promise<{ message: string }> {
+    const user = await this.userRepo.findOne({ where: { id: userId } });
+    if (!user) throw new NotFoundException('Utilizatorul nu a fost găsit.');
+    if (newPassword.length < 6) throw new BadRequestException('Parola trebuie să aibă minim 6 caractere.');
+    user.passwordHash = await bcrypt.hash(newPassword, 10);
+    await this.userRepo.save(user);
+    return { message: 'Parola a fost actualizată cu succes.' };
+  }
+
+  async adminDeleteUser(userId: string): Promise<{ message: string }> {
+    const user = await this.userRepo.findOne({ where: { id: userId } });
+    if (!user) throw new NotFoundException('Utilizatorul nu a fost găsit.');
+    await this.userRepo.remove(user);
+    return { message: 'Contul a fost șters cu succes.' };
+  }
+
+  async adminToggleActive(userId: string): Promise<{ message: string; isVerified: boolean }> {
+    const user = await this.userRepo.findOne({ where: { id: userId } });
+    if (!user) throw new NotFoundException('Utilizatorul nu a fost găsit.');
+    user.isVerified = !user.isVerified;
+    await this.userRepo.save(user);
+    return {
+      message: user.isVerified ? 'Contul a fost activat.' : 'Contul a fost dezactivat.',
+      isVerified: user.isVerified,
+    };
   }
 }

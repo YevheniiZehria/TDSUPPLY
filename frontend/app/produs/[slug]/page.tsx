@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
-import { fetchProductBySlug, formatCurrency, getProductImageUrl, getProductVideoUrl, type Product } from '@/lib/api';
+import { fetchProductBySlug, formatCurrency, getProductImageUrl, getProductVideoUrl, type Product, type ProductVariant } from '@/lib/api';
 import { CATEGORIES } from '@/data/catalog';
 import { useUser } from '@/contexts/UserContext';
 import { useCart } from '@/contexts/CartContext';
@@ -21,6 +21,8 @@ const t = {
     notFound: 'Produsul nu a fost găsit.',
     loading: 'Se încarcă produsul...',
     featured: 'Recomandat',
+    selectDimension: 'Selectează dimensiunea',
+    dimension: 'Dimensiune',
   },
   en: {
     breadcrumbHome: 'Home', breadcrumbCatalog: 'Catalog',
@@ -32,6 +34,8 @@ const t = {
     notFound: 'Product not found.',
     loading: 'Loading product...',
     featured: 'Featured',
+    selectDimension: 'Select dimension',
+    dimension: 'Dimension',
   },
 };
 
@@ -48,6 +52,7 @@ export default function ProductPage() {
   const [error, setError] = useState(false);
   const [added, setAdded] = useState(false);
   const [showImage, setShowImage] = useState(false);
+  const [selectedVariant, setSelectedVariant] = useState<ProductVariant | null>(null);
 
   const txt = t[lang];
 
@@ -59,6 +64,12 @@ export default function ProductPage() {
       .then((p) => {
         setProduct(p);
         setShowImage(Boolean(p.image));
+        // Selectează prima variantă implicit dacă există
+        if (p.variants && p.variants.length > 0) {
+          setSelectedVariant(p.variants[0]);
+        } else {
+          setSelectedVariant(null);
+        }
       })
       .catch(() => setError(true))
       .finally(() => setLoading(false));
@@ -68,10 +79,13 @@ export default function ProductPage() {
     ? CATEGORIES.find(c => c.id === product.category)
     : null;
 
+  // Prețul afișat: varianta selectată sau prețul de bază
+  const displayPrice = selectedVariant ? selectedVariant.price : product?.price ?? 0;
+  const hasVariants = product?.variants && product.variants.length > 0;
+
   function handleAddCart() {
     if (!product) return;
     if (!user) {
-      // Redirect la login cu returnare la acest produs
       router.push(`/autentificare?redirect=/produs/${slug}`);
       return;
     }
@@ -180,6 +194,33 @@ export default function ProductPage() {
                   </div>
                 )}
 
+                {/* Selector variante dimensiune */}
+                {hasVariants && (
+                  <div className="product-variants-section">
+                    <p className="product-variants-label">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ marginRight: 6, verticalAlign: 'middle' }}>
+                        <path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/>
+                      </svg>
+                      {txt.selectDimension}:
+                    </p>
+                    <div className="product-variants-grid">
+                      {product.variants!.map((v) => (
+                        <button
+                          key={v.label}
+                          type="button"
+                          className={`product-variant-btn ${selectedVariant?.label === v.label ? 'selected' : ''}`}
+                          onClick={() => setSelectedVariant(v)}
+                        >
+                          <span className="variant-label">{v.label}</span>
+                          <span className="variant-price">
+                            {formatCurrency(v.price, product.currency, lang === 'ro' ? 'ro-RO' : 'en-US')}
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
                 {/* Meta table */}
                 <div className="product-detail-meta">
                   <div className="product-meta-row">
@@ -190,10 +231,16 @@ export default function ProductPage() {
                     <span>{txt.unit}</span>
                     <span>{product.unit}</span>
                   </div>
+                  {hasVariants && selectedVariant && (
+                    <div className="product-meta-row">
+                      <span>{txt.dimension}</span>
+                      <span style={{ fontWeight: 600, color: 'var(--primary)' }}>{selectedVariant.label}</span>
+                    </div>
+                  )}
                   <div className="product-meta-row">
                     <span>{txt.price}</span>
-                    <span className="product-meta-price">
-                      {formatCurrency(product.price, product.currency, lang === 'ro' ? 'ro-RO' : 'en-US')} <small>/ {product.unit}</small>
+                    <span className="product-meta-price" style={{ transition: 'color 0.2s' }}>
+                      {formatCurrency(displayPrice, product.currency, lang === 'ro' ? 'ro-RO' : 'en-US')} <small>/ {product.unit}</small>
                     </span>
                   </div>
                 </div>

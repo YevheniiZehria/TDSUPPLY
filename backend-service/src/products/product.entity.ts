@@ -23,6 +23,9 @@ export class ProductEntity {
   @Column('decimal', { precision: 10, scale: 2 })
   price: number;
 
+  @Column('jsonb', { nullable: true })
+  variants: { label: string; price: number }[] | null;
+
   @Column({ default: 'USD' })
   currency: string;
 

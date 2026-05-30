@@ -6,6 +6,8 @@ import AdminLayout from '@/components/AdminLayout';
 import { adminCreateProduct, adminUploadImage, adminUploadVideo } from '@/lib/adminApi';
 import { getProductImageUrl, getProductVideoUrl } from '@/lib/api';
 
+interface Variant { label: string; price: string; }
+
 const CATEGORIES = [
   { id: 'zirconia', label: 'Discuri Zirconia' },
   { id: 'glass-ceramic', label: 'Glass Ceramică' },
@@ -33,6 +35,17 @@ export default function NewProductPage() {
     image: '', video: '', inStock: true, featured: false,
     tags: '',
   });
+  const [variants, setVariants] = useState<Variant[]>([]);
+
+  function addVariant() {
+    setVariants(prev => [...prev, { label: '', price: '' }]);
+  }
+  function removeVariant(idx: number) {
+    setVariants(prev => prev.filter((_, i) => i !== idx));
+  }
+  function updateVariant(idx: number, field: keyof Variant, value: string) {
+    setVariants(prev => prev.map((v, i) => i === idx ? { ...v, [field]: value } : v));
+  }
 
   function set(field: string, value: string | boolean) {
     setForm(prev => ({ ...prev, [field]: value }));
@@ -142,12 +155,15 @@ export default function NewProductPage() {
     }
     setSaving(true);
     try {
+      const parsedVariants = variants
+        .filter(v => v.label.trim() && v.price)
+        .map(v => ({ label: v.label.trim(), price: parseFloat(v.price) }));
       await adminCreateProduct({
         code: form.code,
         name: { ro: form.nameRo, en: form.nameEn },
         category: form.category,
         description: { ro: form.descRo, en: form.descEn },
-        price: parseFloat(form.price),
+        price: parseFloat(form.price) || 0,
         currency: form.currency,
         unit: form.unit,
         image: form.image,
@@ -155,7 +171,8 @@ export default function NewProductPage() {
         inStock: form.inStock,
         featured: form.featured,
         tags: form.tags.split(',').map(t => t.trim()).filter(Boolean),
-      });
+        variants: parsedVariants.length > 0 ? parsedVariants : undefined,
+      } as any);
       router.push('/admin/products');
     } catch (err) {
       setError((err as Error).message || 'Eroare la salvare.');
@@ -211,11 +228,13 @@ export default function NewProductPage() {
           </div>
 
           <div className="admin-form-section">
-            <h3 className="admin-form-section-title">Preț & Disponibilitate</h3>
+            <h3 className="admin-form-section-title">Preț &amp; Disponibilitate</h3>
             <div className="admin-form-row">
               <div className="admin-field">
-                <label className="admin-label">Preț *</label>
-                <input className="admin-input" type="number" min="0" step="0.01" placeholder="48.50" value={form.price} onChange={e => set('price', e.target.value)} required />
+                <label className="admin-label">
+                  Preț {variants.length > 0 ? '(fallback dacă nu e variantă selectată)' : '*'}
+                </label>
+                <input className="admin-input" type="number" min="0" step="0.01" placeholder="48.50" value={form.price} onChange={e => set('price', e.target.value)} required={variants.length === 0} />
               </div>
               <div className="admin-field">
                 <label className="admin-label">Monedă</label>
@@ -240,6 +259,69 @@ export default function NewProductPage() {
                 <span>Produs recomandat (featured)</span>
               </label>
             </div>
+          </div>
+
+          {/* ── Variante Dimensiuni & Prețuri ── */}
+          <div className="admin-form-section">
+            <h3 className="admin-form-section-title">Variante dimensiuni &amp; prețuri</h3>
+            <p style={{ fontSize: 13, color: 'var(--text-muted)', marginTop: -8 }}>
+              Lasă gol dacă produsul are un singur preț. Când există variante, selectând o dimensiune se actualizează prețul afișat pe pagina produsului.
+            </p>
+
+            {variants.length > 0 && (
+              <table style={{ width: '100%', borderCollapse: 'collapse', marginTop: 8 }}>
+                <thead>
+                  <tr style={{ borderBottom: '1px solid var(--border)' }}>
+                    <th style={{ textAlign: 'left', fontSize: 12, fontWeight: 700, color: 'var(--text-muted)', padding: '6px 8px', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Dimensiune</th>
+                    <th style={{ textAlign: 'left', fontSize: 12, fontWeight: 700, color: 'var(--text-muted)', padding: '6px 8px', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Preț (USD)</th>
+                    <th style={{ width: 40 }} />
+                  </tr>
+                </thead>
+                <tbody>
+                  {variants.map((v, idx) => (
+                    <tr key={idx} style={{ borderBottom: '1px solid var(--border)' }}>
+                      <td style={{ padding: '6px 8px' }}>
+                        <input
+                          className="admin-input"
+                          style={{ padding: '7px 10px' }}
+                          placeholder="ex: 10mm"
+                          value={v.label}
+                          onChange={e => updateVariant(idx, 'label', e.target.value)}
+                        />
+                      </td>
+                      <td style={{ padding: '6px 8px' }}>
+                        <input
+                          className="admin-input"
+                          style={{ padding: '7px 10px' }}
+                          type="number" min="0" step="0.01"
+                          placeholder="10.50"
+                          value={v.price}
+                          onChange={e => updateVariant(idx, 'price', e.target.value)}
+                        />
+                      </td>
+                      <td style={{ padding: '6px 8px', textAlign: 'center' }}>
+                        <button
+                          type="button"
+                          className="admin-action-icon-btn delete"
+                          title="Șterge variantă"
+                          onClick={() => removeVariant(idx)}
+                          style={{ margin: '0 auto' }}
+                        >✕</button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+
+            <button
+              type="button"
+              className="admin-btn-ghost"
+              style={{ alignSelf: 'flex-start', marginTop: 8 }}
+              onClick={addVariant}
+            >
+              + Adaugă dimensiune
+            </button>
           </div>
 
           <div className="admin-form-section">

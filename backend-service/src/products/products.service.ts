@@ -210,6 +210,7 @@ export class ProductsService implements OnModuleInit {
       inStock: dto.inStock ?? true,
       featured: dto.featured ?? false,
       tags: dto.tags ?? [],
+      variants: dto.variants ?? null,
     });
     return this.productRepo.save(product);
   }
@@ -227,6 +228,10 @@ export class ProductsService implements OnModuleInit {
 
     const { name, description, ...otherProps } = dto;
     Object.assign(existing, otherProps);
+    // Actualizăm explicit variants (inclusiv null pentru ștergere variante)
+    if ('variants' in dto) {
+      existing.variants = dto.variants ?? null;
+    }
 
     return this.productRepo.save(existing);
   }

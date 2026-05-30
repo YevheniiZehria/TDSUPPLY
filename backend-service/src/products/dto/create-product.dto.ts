@@ -16,6 +16,18 @@ class LocalizedStringDto {
   @ApiProperty() @IsString() @MinLength(1) en: string;
 }
 
+class ProductVariantDto {
+  @ApiProperty({ description: 'Eticheta variantei, ex: 10mm' })
+  @IsString()
+  @MinLength(1)
+  label: string;
+
+  @ApiProperty({ description: 'Prețul pentru această variantă' })
+  @IsNumber()
+  @Min(0)
+  price: number;
+}
+
 export class CreateProductDto {
   @ApiProperty()
   @IsString() @MinLength(1)
@@ -74,4 +86,14 @@ export class CreateProductDto {
   @IsArray()
   @IsString({ each: true })
   tags?: string[];
+
+  @ApiPropertyOptional({
+    description: 'Variante dimensiune/preț (opțional). Dacă există, prețul principal devine fallback.',
+    type: [ProductVariantDto],
+  })
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => ProductVariantDto)
+  variants?: ProductVariantDto[];
 }

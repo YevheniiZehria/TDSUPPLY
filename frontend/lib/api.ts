@@ -1,5 +1,6 @@
 const BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
 
+export interface ProductVariant { label: string; price: number; }
 export interface ProductName { ro: string; en: string; }
 export interface Product {
   id: string; slug: string; code: string;
@@ -8,7 +9,9 @@ export interface Product {
   price: number; currency: string; unit: string;
   image: string; video?: string; inStock: boolean; featured: boolean;
   tags: string[]; createdAt: string; updatedAt: string;
+  variants?: ProductVariant[] | null;
 }
+
 export interface ProductStats {
   total: number; inStock: number; outOfStock: number;
   featured: number; byCategory: Record<string, number>;
