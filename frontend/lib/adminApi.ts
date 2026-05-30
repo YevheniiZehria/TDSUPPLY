@@ -163,12 +163,12 @@ export interface AdminUser {
 
 /** Lista tuturor utilizatorilor cu numărul de comenzi */
 export function adminGetUsers(): Promise<AdminUser[]> {
-  return adminFetch<AdminUser[]>('/admin/users');
+  return adminFetch<AdminUser[]>('/admin/users-api');
 }
 
 /** Schimbă parola unui utilizator */
 export function adminChangeUserPassword(id: string, newPassword: string): Promise<{ message: string }> {
-  return adminFetch<{ message: string }>(`/admin/users/${id}/password`, {
+  return adminFetch<{ message: string }>(`/admin/users-api/${id}/password`, {
     method: 'PATCH',
     body: JSON.stringify({ newPassword }),
   });
@@ -176,14 +176,14 @@ export function adminChangeUserPassword(id: string, newPassword: string): Promis
 
 /** Activează sau dezactivează contul unui utilizator */
 export function adminToggleUserActive(id: string): Promise<{ message: string; isVerified: boolean }> {
-  return adminFetch<{ message: string; isVerified: boolean }>(`/admin/users/${id}/toggle-active`, {
+  return adminFetch<{ message: string; isVerified: boolean }>(`/admin/users-api/${id}/toggle-active`, {
     method: 'PATCH',
   });
 }
 
 /** Șterge un cont de utilizator */
 export function adminDeleteUser(id: string): Promise<{ message: string }> {
-  return adminFetch<{ message: string }>(`/admin/users/${id}`, {
+  return adminFetch<{ message: string }>(`/admin/users-api/${id}`, {
     method: 'DELETE',
   });
 }

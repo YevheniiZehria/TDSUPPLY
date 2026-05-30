@@ -27,7 +27,7 @@ class AdminChangePasswordDto {
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Roles('admin', 'superadmin')
-@Controller('admin/users')
+@Controller('admin/users-api')
 export class AdminUsersController {
   constructor(private readonly userAuthService: UserAuthService) {}
 
