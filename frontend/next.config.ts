@@ -29,6 +29,10 @@ const nextConfig: NextConfig = {
         destination: 'http://localhost:3001/admin/auth/:path*',
       },
       {
+        source: '/admin/users/:path*',
+        destination: 'http://localhost:3001/admin/users/:path*',
+      },
+      {
         source: '/admin/ping',
         destination: 'http://localhost:3001/admin/ping',
       },
