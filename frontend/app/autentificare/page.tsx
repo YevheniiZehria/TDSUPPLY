@@ -57,8 +57,18 @@ function validatePhone(phone: string): string {
 // Validare dată naștere (minim 18 ani)
 function validateBirthDate(birthDateStr: string): string {
   if (!birthDateStr) return '';
-  const birth = new Date(birthDateStr);
-  if (isNaN(birth.getTime())) return 'Introduceți o dată validă.';
+  if (!/^\d{2}\.\d{2}\.\d{4}$/.test(birthDateStr)) {
+    return 'Format invalid. Folosiți ZZ.LL.AAAA (ex: 31.05.2008).';
+  }
+  const parts = birthDateStr.split('.');
+  const day = parseInt(parts[0], 10);
+  const month = parseInt(parts[1], 10) - 1; // Luni de la 0 la 11
+  const year = parseInt(parts[2], 10);
+  const birth = new Date(year, month, day);
+
+  if (isNaN(birth.getTime()) || birth.getFullYear() !== year || birth.getMonth() !== month || birth.getDate() !== day) {
+    return 'Data nașterii este invalidă.';
+  }
   
   const today = new Date();
   let age = today.getFullYear() - birth.getFullYear();
@@ -67,7 +77,7 @@ function validateBirthDate(birthDateStr: string): string {
     age--;
   }
   if (birth.getFullYear() < 1900) {
-    return 'Data nașterii este invalidă.';
+    return 'Anul nașterii este prea mic.';
   }
   if (age < 18) {
     return 'Trebuie să aveți cel puțin 18 ani pentru a vă înregistra.';
@@ -132,11 +142,26 @@ function LoginContent() {
     }
   }
 
-  // Validare dată naștere în timp real
+  // Validare dată naștere în timp real cu auto-formatare (ZZ.LL.AAAA)
   function handleBirthDateChange(val: string) {
-    setBirthDate(val);
-    if (val) setBirthDateError(validateBirthDate(val));
-    else setBirthDateError('');
+    // Permite doar cifre din valoarea curentă
+    const digits = val.replace(/\D/g, '').slice(0, 8);
+    let formatted = '';
+    if (digits.length > 0) {
+      formatted += digits.slice(0, 2);
+    }
+    if (digits.length > 2) {
+      formatted += '.' + digits.slice(2, 4);
+    }
+    if (digits.length > 4) {
+      formatted += '.' + digits.slice(4, 8);
+    }
+    setBirthDate(formatted);
+    if (formatted.length === 10) {
+      setBirthDateError(validateBirthDate(formatted));
+    } else {
+      setBirthDateError('');
+    }
   }
 
   // Încarcă și inițializează Cloudflare Turnstile
@@ -201,18 +226,27 @@ function LoginContent() {
         setError('Corectați data nașterii înainte de a continua.');
         return;
       }
+      if (country && country.trim().length < 2) {
+        setError('Țara trebuie să aibă cel puțin 2 caractere.');
+        return;
+      }
     }
 
     setSubmitting(true);
     try {
       if (isRegister) {
+        let formattedBirthDate = undefined;
+        if (birthDate) {
+          const parts = birthDate.split('.');
+          formattedBirthDate = `${parts[2]}-${parts[1]}-${parts[0]}`; // YYYY-MM-DD
+        }
         await register(
           email.trim(),
           password,
           name.trim(),
           turnstileToken,
           phone || undefined,
-          birthDate || undefined,
+          formattedBirthDate,
           country || undefined,
         );
         setSuccess(true);
@@ -364,7 +398,7 @@ function LoginContent() {
                   {/* Dată naștere */}
                   <div className="login-field" style={{ marginBottom: 0 }}>
                     <label className="login-label" htmlFor="user-birth-date">
-                      Dată naștere
+                      Dată naștere (ZZ.LL.AAAA)
                       <span style={{ fontSize: 11, fontWeight: 400, color: 'var(--text-muted)', marginLeft: 6 }}>(opțional)</span>
                     </label>
                     <div className="login-input-wrap" style={{ flexDirection: 'column', alignItems: 'stretch' }}>
@@ -374,13 +408,14 @@ function LoginContent() {
                         </svg>
                         <input
                           id="user-birth-date"
-                          type="date"
+                          type="text"
                           className={`login-input${birthDateError ? ' login-input--error' : birthDate && !birthDateError ? ' login-input--valid' : ''}`}
+                          placeholder="ZZ.LL.AAAA (ex: 31.05.2008)"
                           value={birthDate}
                           onChange={e => handleBirthDateChange(e.target.value)}
                           onBlur={() => { if (birthDate) setBirthDateError(validateBirthDate(birthDate)); }}
                           disabled={submitting || success}
-                          style={{ paddingRight: 10 }}
+                          maxLength={10}
                         />
                       </div>
                       {birthDateError && (
@@ -398,18 +433,15 @@ function LoginContent() {
                       <svg className="login-input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                         <circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/>
                       </svg>
-                      <select
+                      <input
                         id="user-country"
+                        type="text"
                         className="login-input"
-                        style={{ cursor: 'pointer' }}
+                        placeholder="Ex: România"
                         value={country}
                         onChange={e => setCountry(e.target.value)}
                         disabled={submitting || success}
-                      >
-                        {COUNTRIES.map(c => (
-                          <option key={c} value={c}>{c}</option>
-                        ))}
-                      </select>
+                      />
                     </div>
                   </div>
                 </div>
