@@ -24,7 +24,7 @@ export class ProductEntity {
   price: number;
 
   @Column('jsonb', { nullable: true })
-  variants: { label: string; price: number }[] | null;
+  variants: { label: string; price: number; inStock?: boolean }[] | null;
 
   @Column('text', { array: true, default: [] })
   images: string[];

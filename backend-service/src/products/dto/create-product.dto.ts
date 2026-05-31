@@ -26,6 +26,11 @@ class ProductVariantDto {
   @IsNumber()
   @Min(0)
   price: number;
+
+  @ApiPropertyOptional({ description: 'Specifică dacă varianta este în stoc', default: true })
+  @IsOptional()
+  @IsBoolean()
+  inStock?: boolean;
 }
 
 export class CreateProductDto {

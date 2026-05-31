@@ -1,6 +1,6 @@
 const BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
 
-export interface ProductVariant { label: string; price: number; }
+export interface ProductVariant { label: string; price: number; inStock?: boolean; }
 export interface ProductName { ro: string; en: string; }
 export interface Product {
   id: string; slug: string; code: string;

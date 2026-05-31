@@ -37,7 +37,14 @@ export default function CartDrawer({ lang }: { lang: 'ro' | 'en' }) {
               {items.map((item) => (
                 <div key={item.id} className="cart-drawer-item">
                   <div className="cart-item-info">
-                    <div className="cart-item-name">{item.name}</div>
+                    <div className="cart-item-name" style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                      {item.name}
+                      {item.inStock === false && (
+                        <span style={{ fontSize: 10, padding: '2px 6px', borderRadius: 4, background: 'rgba(234,88,12,0.1)', color: '#EA580C', fontWeight: 600 }}>
+                          {lang === 'ro' ? 'Precomandă' : 'Pre-order'}
+                        </span>
+                      )}
+                    </div>
                     <div className="cart-item-price">
                       {formatCurrency(item.price, item.currency, lang === 'ro' ? 'ro-RO' : 'en-US')}
                     </div>

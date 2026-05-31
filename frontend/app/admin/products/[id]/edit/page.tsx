@@ -6,7 +6,7 @@ import AdminLayout from '@/components/AdminLayout';
 import { adminGetProductById, adminUpdateProduct, adminDeleteProduct, adminUploadImage, adminUploadVideo } from '@/lib/adminApi';
 import { getProductImageUrl, getProductVideoUrl, type Product } from '@/lib/api';
 
-interface Variant { label: string; price: string; }
+interface Variant { label: string; price: string; inStock: boolean; }
 
 const CATEGORIES = [
   { id: 'zirconia', label: 'Discuri Zirconia' },
@@ -50,12 +50,12 @@ export default function EditProductPage() {
   const [galleryUploading, setGalleryUploading] = useState(false);
 
   function addVariant() {
-    setVariants(prev => [...prev, { label: '', price: '' }]);
+    setVariants(prev => [...prev, { label: '', price: '', inStock: true }]);
   }
   function removeVariant(idx: number) {
     setVariants(prev => prev.filter((_, i) => i !== idx));
   }
-  function updateVariant(idx: number, field: keyof Variant, value: string) {
+  function updateVariant(idx: number, field: keyof Variant, value: any) {
     setVariants(prev => prev.map((v, i) => i === idx ? { ...v, [field]: value } : v));
   }
 
@@ -75,7 +75,7 @@ export default function EditProductPage() {
         });
         // Încarcă variantele existente
         if (p.variants && p.variants.length > 0) {
-          setVariants(p.variants.map(v => ({ label: v.label, price: String(v.price) })));
+          setVariants(p.variants.map(v => ({ label: v.label, price: String(v.price), inStock: v.inStock !== false })));
         }
         setImages(p.images ?? []);
       })
@@ -229,7 +229,7 @@ export default function EditProductPage() {
     try {
       const parsedVariants = variants
         .filter(v => v.label.trim() && v.price)
-        .map(v => ({ label: v.label.trim(), price: parseFloat(v.price) }))
+        .map(v => ({ label: v.label.trim(), price: parseFloat(v.price), inStock: v.inStock !== false }))
         .sort((a, b) => {
           const numRegex = /[-+]?[0-9]*\.?[0-9]+/;
           const aMatch = a.label.match(numRegex);
@@ -386,6 +386,7 @@ export default function EditProductPage() {
                   <tr style={{ borderBottom: '1px solid var(--border)' }}>
                     <th style={{ textAlign: 'left', fontSize: 12, fontWeight: 700, color: 'var(--text-muted)', padding: '6px 8px', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Dimensiune</th>
                     <th style={{ textAlign: 'left', fontSize: 12, fontWeight: 700, color: 'var(--text-muted)', padding: '6px 8px', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Preț (USD)</th>
+                    <th style={{ textAlign: 'center', fontSize: 12, fontWeight: 700, color: 'var(--text-muted)', padding: '6px 8px', textTransform: 'uppercase', letterSpacing: '0.06em', width: 80 }}>În Stoc</th>
                     <th style={{ width: 40 }} />
                   </tr>
                 </thead>
@@ -409,6 +410,14 @@ export default function EditProductPage() {
                           placeholder="10.50"
                           value={v.price}
                           onChange={e => updateVariant(idx, 'price', e.target.value)}
+                        />
+                      </td>
+                      <td style={{ padding: '6px 8px', textAlign: 'center' }}>
+                        <input
+                          type="checkbox"
+                          checked={v.inStock !== false}
+                          onChange={e => updateVariant(idx, 'inStock', e.target.checked)}
+                          style={{ width: 18, height: 18, cursor: 'pointer', verticalAlign: 'middle' }}
                         />
                       </td>
                       <td style={{ padding: '6px 8px', textAlign: 'center' }}>

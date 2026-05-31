@@ -9,7 +9,7 @@ import {
   useCallback,
   type ReactNode,
 } from 'react';
-import type { Product } from '@/lib/api';
+import type { Product, ProductVariant } from '@/lib/api';
 
 const STORAGE_KEY = 'cart_items';
 
@@ -21,13 +21,15 @@ export interface CartItem {
   currency: string;
   unit: string;
   quantity: number;
+  variantLabel?: string;
+  inStock: boolean;
 }
 
 interface CartContextValue {
   items: CartItem[];
   count: number;
   isDrawerOpen: boolean;
-  addItem: (product: Product, lang: 'ro' | 'en') => void;
+  addItem: (product: Product, lang: 'ro' | 'en', variant?: ProductVariant | null) => void;
   removeItem: (id: string) => void;
   updateQuantity: (id: string, delta: number) => void;
   clearCart: () => void;
@@ -74,25 +76,32 @@ export function CartProvider({ children }: { children: ReactNode }) {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
   }, [hydrated, items]);
 
-  const addItem = useCallback((product: Product, lang: 'ro' | 'en') => {
+  const addItem = useCallback((product: Product, lang: 'ro' | 'en', variant?: ProductVariant | null) => {
     setItems((current) => {
-      const existing = current.find((item) => item.id === product.id);
+      const itemId = variant ? `${product.id}-${variant.label}` : product.id;
+      const existing = current.find((item) => item.id === itemId);
       if (existing) {
         return current.map((item) =>
-          item.id === product.id ? { ...item, quantity: item.quantity + 1 } : item,
+          item.id === itemId ? { ...item, quantity: item.quantity + 1 } : item,
         );
       }
+
+      const itemPrice = variant ? variant.price : product.price;
+      const itemName = variant ? `${product.name[lang]} (${variant.label})` : product.name[lang];
+      const itemInStock = variant ? (variant.inStock !== false && product.inStock) : product.inStock;
 
       return [
         ...current,
         {
-          id: product.id,
+          id: itemId,
           slug: product.slug,
-          name: product.name[lang],
-          price: product.price,
+          name: itemName,
+          price: itemPrice,
           currency: product.currency,
           unit: product.unit,
           quantity: 1,
+          variantLabel: variant?.label,
+          inStock: itemInStock,
         },
       ];
     });

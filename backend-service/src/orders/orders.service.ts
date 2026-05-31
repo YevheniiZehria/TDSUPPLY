@@ -63,22 +63,34 @@ export class OrdersService {
     const verifiedItems: OrderItem[] = [];
 
     for (const item of orderData.items) {
-      const product = await this.productsService.findById(item.id);
+      const hasVariant = item.id.includes('-');
+      const productId = hasVariant ? item.id.split('-')[0] : item.id;
+      const variantLabel = hasVariant ? item.id.split('-').slice(1).join('-') : null;
+
+      const product = await this.productsService.findById(productId);
       if (!product) {
-        throw new BadRequestException(`Produsul ${item.id} nu mai există.`);
+        throw new BadRequestException(`Produsul ${productId} nu mai există.`);
       }
-      if (!product.inStock && item.quantity > 0) {
-        throw new BadRequestException(`Produsul ${product.name.ro} nu mai este în stoc.`);
+
+      let itemPrice = product.price;
+      let itemName = product.name.ro;
+
+      if (variantLabel && product.variants) {
+        const variant = product.variants.find(v => v.label === variantLabel);
+        if (variant) {
+          itemPrice = variant.price;
+          itemName = `${product.name.ro} (${variant.label})`;
+        }
       }
 
       currency = product.currency; // Presupunem aceeași monedă pentru toate produsele
-      calculatedTotal += product.price * item.quantity;
+      calculatedTotal += itemPrice * item.quantity;
 
       verifiedItems.push({
-        id: product.id,
+        id: item.id,
         slug: product.slug,
-        name: product.name.ro,
-        price: product.price,
+        name: itemName,
+        price: itemPrice,
         currency: product.currency,
         quantity: item.quantity,
       });

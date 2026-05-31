@@ -27,11 +27,6 @@ export default function ProductCard({ product, lang }: ProductCardProps) {
     e.preventDefault();
     e.stopPropagation();
 
-    if (!user) {
-      router.push(`/autentificare?redirect=/produs/${product.slug}`);
-      return;
-    }
-
     addItem(product, lang);
     setAdded(true);
     setTimeout(() => setAdded(false), 1500);
@@ -61,13 +56,17 @@ export default function ProductCard({ product, lang }: ProductCardProps) {
           </div>
         )}
 
-        {product.inStock && (
+        {product.inStock ? (
           <span className="product-badge badge-stock">
             {lang === 'ro' ? '✓ În stoc' : '✓ In stock'}
           </span>
+        ) : (
+          <span className="product-badge badge-preorder" style={{ background: '#FFF7ED', color: '#EA580C', border: '1px solid #FED7AA' }}>
+            {lang === 'ro' ? 'Precomandă' : 'Pre-order'}
+          </span>
         )}
         {product.featured && (
-          <span className="product-badge badge-featured">
+          <span className="product-badge badge-featured" style={{ top: !product.inStock ? 40 : 12 }}>
             {lang === 'ro' ? 'Recomandat' : 'Featured'}
           </span>
         )}
@@ -90,13 +89,18 @@ export default function ProductCard({ product, lang }: ProductCardProps) {
           className="btn-add-cart"
           onClick={handleAddToCart}
           aria-label={lang === 'ro' ? 'Adaugă în coș' : 'Add to cart'}
-          disabled={!product.inStock}
         >
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
             <circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/>
             <path d="M1 1h4l2.68 13.39a2 2 0 002 1.61h9.72a2 2 0 001.98-1.67l1.38-9.39H6"/>
           </svg>
-          {added ? (lang === 'ro' ? 'Adăugat' : 'Added') : (lang === 'ro' ? 'Adaugă' : 'Add')}
+          {added ? (
+            lang === 'ro' ? 'Adăugat' : 'Added'
+          ) : !product.inStock ? (
+            lang === 'ro' ? 'Precomandă' : 'Pre-order'
+          ) : (
+            lang === 'ro' ? 'Adaugă' : 'Add'
+          )}
         </button>
       </div>
     </Link>

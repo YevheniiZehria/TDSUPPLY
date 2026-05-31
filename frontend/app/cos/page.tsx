@@ -307,7 +307,14 @@ export default function CartPage() {
                   {items.map(item => (
                     <tr key={item.id} style={{ borderBottom: '1px solid var(--border)' }}>
                       <td style={{ padding: '16px 0' }}>
-                        <div style={{ fontWeight: 600 }}>{item.name}</div>
+                        <div style={{ fontWeight: 600, display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                          {item.name}
+                          {item.inStock === false && (
+                            <span style={{ fontSize: 11, padding: '2px 8px', borderRadius: 4, background: 'rgba(234,88,12,0.1)', color: '#EA580C', fontWeight: 600 }}>
+                              {lang === 'ro' ? 'Precomandă' : 'Pre-order'}
+                            </span>
+                          )}
+                        </div>
                         <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>{item.slug}</div>
                       </td>
                       <td>{formatCurrency(item.price, item.currency, lang === 'ro' ? 'ro-RO' : 'en-US')}</td>
@@ -517,6 +524,8 @@ export default function CartPage() {
               >
                 {submitting
                   ? (lang === 'ro' ? '⏳ Se procesează...' : '⏳ Processing...')
+                  : !user
+                  ? (lang === 'ro' ? 'Conectează-te pentru a plasa comanda' : 'Login to place order')
                   : (lang === 'ro' ? 'Plasează comanda' : 'Place order')}
               </button>
 

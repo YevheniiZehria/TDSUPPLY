@@ -81,7 +81,8 @@ export default function ProductPageClient({ slug }: { slug: string }) {
             }
             return a.label.localeCompare(b.label, undefined, { numeric: true, sensitivity: 'base' });
           });
-          setSelectedVariant(p.variants[0]);
+          const firstInStock = p.variants.find(v => v.inStock !== false) || p.variants[0];
+          setSelectedVariant(firstInStock);
         } else {
           setSelectedVariant(null);
         }
@@ -103,11 +104,7 @@ export default function ProductPageClient({ slug }: { slug: string }) {
 
   function handleAddCart() {
     if (!product) return;
-    if (!user) {
-      router.push(`/autentificare?redirect=/produs/${slug}`);
-      return;
-    }
-    addItem(product, lang);
+    addItem(product, lang, selectedVariant);
     setAdded(true);
     setTimeout(() => setAdded(false), 2000);
   }
@@ -191,7 +188,9 @@ export default function ProductPageClient({ slug }: { slug: string }) {
                   {product.inStock ? (
                     <span className="product-detail-badge badge-stock" style={{ top: product.featured ? 48 : 12 }}>{txt.inStock}</span>
                   ) : (
-                    <span className="product-detail-badge" style={{ top: product.featured ? 48 : 12, background: '#FEF2F2', color: 'var(--danger)' }}>{txt.outOfStock}</span>
+                    <span className="product-detail-badge" style={{ top: product.featured ? 48 : 12, background: '#FFF7ED', color: '#EA580C', border: '1px solid #FED7AA' }}>
+                      {lang === 'ro' ? 'Precomandă' : 'Pre-order'}
+                    </span>
                   )}
                 </div>
 
@@ -266,19 +265,32 @@ export default function ProductPageClient({ slug }: { slug: string }) {
                       {txt.selectDimension}:
                     </p>
                     <div className="product-variants-grid">
-                      {product.variants!.map((v) => (
-                        <button
-                          key={v.label}
-                          type="button"
-                          className={`product-variant-btn ${selectedVariant?.label === v.label ? 'selected' : ''}`}
-                          onClick={() => setSelectedVariant(v)}
-                        >
-                          <span className="variant-label">{v.label}</span>
-                          <span className="variant-price">
-                            {formatCurrency(v.price, product.currency, lang === 'ro' ? 'ro-RO' : 'en-US')}
-                          </span>
-                        </button>
-                      ))}
+                      {product.variants!.map((v) => {
+                        const isOutOfStock = v.inStock === false;
+                        return (
+                          <button
+                            key={v.label}
+                            type="button"
+                            className={`product-variant-btn ${selectedVariant?.label === v.label ? 'selected' : ''}`}
+                            onClick={() => !isOutOfStock && setSelectedVariant(v)}
+                            disabled={isOutOfStock}
+                            style={isOutOfStock ? {
+                              opacity: 0.4,
+                              cursor: 'not-allowed',
+                            } : undefined}
+                          >
+                            <span className="variant-label" style={isOutOfStock ? { textDecoration: 'line-through' } : undefined}>{v.label}</span>
+                            <span className="variant-price" style={isOutOfStock ? { textDecoration: 'line-through' } : undefined}>
+                              {formatCurrency(v.price, product.currency, lang === 'ro' ? 'ro-RO' : 'en-US')}
+                            </span>
+                            {isOutOfStock && (
+                              <span style={{ fontSize: 9, display: 'block', marginTop: 2, color: 'var(--danger)' }}>
+                                {lang === 'ro' ? 'indisponibil' : 'unavailable'}
+                              </span>
+                            )}
+                          </button>
+                        );
+                      })}
                     </div>
                   </div>
                 )}
@@ -312,32 +324,29 @@ export default function ProductPageClient({ slug }: { slug: string }) {
                   <button
                     className={`product-cta-primary ${added ? 'added' : ''}`}
                     onClick={handleAddCart}
-                    disabled={!product.inStock}
-                    title={!user ? 'Trebuie să fii autentificat pentru a comanda' : ''}
                   >
                     {added ? (
                       <>
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                           <path d="M20 6L9 17l-5-5"/>
                         </svg>
-                        Adăugat!
+                        {lang === 'ro' ? 'Adăugat!' : 'Added!'}
                       </>
-                    ) : user ? (
+                    ) : (selectedVariant ? selectedVariant.inStock === false : !product.inStock) ? (
+                      <>
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/>
+                          <path d="M1 1h4l2.68 13.39a2 2 0 002 1.61h9.72a2 2 0 001.98-1.67l1.38-9.39H6"/>
+                        </svg>
+                        {lang === 'ro' ? 'Precomandă' : 'Pre-order'}
+                      </>
+                    ) : (
                       <>
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                           <circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/>
                           <path d="M1 1h4l2.68 13.39a2 2 0 002 1.61h9.72a2 2 0 001.98-1.67l1.38-9.39H6"/>
                         </svg>
                         {txt.addCart}
-                      </>
-                    ) : (
-                      <>
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                          <path d="M15 3h4a2 2 0 012 2v14a2 2 0 01-2 2h-4"/>
-                          <polyline points="10 17 15 12 10 7"/>
-                          <line x1="15" y1="12" x2="3" y2="12"/>
-                        </svg>
-                        Autentifică-te pentru a comanda
                       </>
                     )}
                   </button>
