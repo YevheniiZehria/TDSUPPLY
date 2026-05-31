@@ -211,6 +211,7 @@ export class ProductsService implements OnModuleInit {
       featured: dto.featured ?? false,
       tags: dto.tags ?? [],
       variants: dto.variants ?? null,
+      images: dto.images ?? [],
     });
     return this.productRepo.save(product);
   }

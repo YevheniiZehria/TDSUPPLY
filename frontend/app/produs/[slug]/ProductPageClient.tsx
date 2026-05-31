@@ -51,6 +51,7 @@ export default function ProductPageClient({ slug }: { slug: string }) {
   const [added, setAdded] = useState(false);
   const [showImage, setShowImage] = useState(false);
   const [selectedVariant, setSelectedVariant] = useState<ProductVariant | null>(null);
+  const [activeImage, setActiveImage] = useState<string>('');
 
   const txt = t[lang];
 
@@ -86,6 +87,7 @@ export default function ProductPageClient({ slug }: { slug: string }) {
         }
         setProduct(p);
         setShowImage(Boolean(p.image));
+        setActiveImage(p.image ?? '');
       })
       .catch(() => setError(true))
       .finally(() => setLoading(false));
@@ -161,13 +163,13 @@ export default function ProductPageClient({ slug }: { slug: string }) {
               {/* Left — imagine */}
               <div className="product-detail-image-col">
                 <div className="product-detail-image-wrap">
-                  {showImage ? (
+                  {showImage && activeImage ? (
                     // Folosim <img> simplu (nu Next.js <Image>) deoarece imaginile
                     // uploadate sunt servite prin rewrite-ul Next.js /public/:path* → backend.
                     // Next.js <Image> cu URL relativ caută fişierul în /public local şi eşuează.
                     // eslint-disable-next-line @next/next/no-img-element
                     <img
-                      src={getProductImageUrl(product.image)}
+                      src={getProductImageUrl(activeImage)}
                       alt={product.name[lang]}
                       className="product-detail-image"
                       style={{ objectFit: 'cover', width: '100%', height: '100%', position: 'absolute', inset: 0 }}
@@ -192,6 +194,50 @@ export default function ProductPageClient({ slug }: { slug: string }) {
                     <span className="product-detail-badge" style={{ top: product.featured ? 48 : 12, background: '#FEF2F2', color: 'var(--danger)' }}>{txt.outOfStock}</span>
                   )}
                 </div>
+
+                {/* Galerie miniaturi */}
+                {(() => {
+                  const galleryImages = [product.image, ...(product.images ?? [])].filter(Boolean).filter((v, i, a) => a.indexOf(v) === i);
+                  if (galleryImages.length <= 1) return null;
+                  return (
+                    <div style={{ display: 'flex', gap: 10, marginTop: 12, overflowX: 'auto', paddingBottom: 4 }}>
+                      {galleryImages.map((imgUrl) => (
+                        <button
+                          key={imgUrl}
+                          type="button"
+                          onClick={() => {
+                            setActiveImage(imgUrl);
+                            setShowImage(true);
+                          }}
+                          onMouseEnter={() => {
+                            setActiveImage(imgUrl);
+                            setShowImage(true);
+                          }}
+                          style={{
+                            width: 70,
+                            height: 70,
+                            borderRadius: 8,
+                            border: activeImage === imgUrl ? '2px solid var(--primary)' : '1.5px solid var(--border)',
+                            padding: 2,
+                            background: 'var(--background)',
+                            cursor: 'pointer',
+                            overflow: 'hidden',
+                            flexShrink: 0,
+                            transition: 'border-color 0.2s, transform 0.15s',
+                            transform: activeImage === imgUrl ? 'scale(1.05)' : 'scale(1)',
+                            outline: 'none',
+                          }}
+                        >
+                          <img
+                            src={getProductImageUrl(imgUrl)}
+                            alt="Thumbnail"
+                            style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 6 }}
+                          />
+                        </button>
+                      ))}
+                    </div>
+                  );
+                })()}
               </div>
 
               {/* Right — info */}

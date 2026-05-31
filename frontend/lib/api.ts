@@ -10,6 +10,7 @@ export interface Product {
   image: string; video?: string; inStock: boolean; featured: boolean;
   tags: string[]; createdAt: string; updatedAt: string;
   variants?: ProductVariant[] | null;
+  images?: string[];
 }
 
 export interface ProductStats {

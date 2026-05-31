@@ -87,6 +87,12 @@ export class CreateProductDto {
   @IsString({ each: true })
   tags?: string[];
 
+  @ApiPropertyOptional({ type: [String] })
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  images?: string[];
+
   @ApiPropertyOptional({
     description: 'Variante dimensiune/preț (opțional). Dacă există, prețul principal devine fallback.',
     type: [ProductVariantDto],

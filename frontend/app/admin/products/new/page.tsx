@@ -36,6 +36,8 @@ export default function NewProductPage() {
     tags: '',
   });
   const [variants, setVariants] = useState<Variant[]>([]);
+  const [images, setImages] = useState<string[]>([]);
+  const [galleryUploading, setGalleryUploading] = useState(false);
 
   function addVariant() {
     setVariants(prev => [...prev, { label: '', price: '' }]);
@@ -146,6 +148,42 @@ export default function NewProductPage() {
     }
   }
 
+  async function handleGalleryUpload(files: FileList | null) {
+    if (!files || files.length === 0) return;
+    setGalleryUploading(true);
+    setError('');
+    const newUrls: string[] = [];
+    try {
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        if (!file.type.startsWith('image/')) continue;
+        const { url } = await adminUploadImage(file);
+        newUrls.push(url);
+      }
+      setImages(prev => [...prev, ...newUrls]);
+    } catch (err) {
+      setError('Eroare la încărcarea imaginilor în galerie.');
+    } finally {
+      setGalleryUploading(false);
+    }
+  }
+
+  function setAsMainImage(imgUrl: string) {
+    const currentMain = form.image;
+    set('image', imgUrl);
+    setImages(prev => {
+      const filtered = prev.filter(url => url !== imgUrl);
+      if (currentMain && !filtered.includes(currentMain) && currentMain !== imgUrl) {
+        return [...filtered, currentMain];
+      }
+      return filtered;
+    });
+  }
+
+  function removeGalleryImage(imgUrl: string) {
+    setImages(prev => prev.filter(url => url !== imgUrl));
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError('');
@@ -190,6 +228,7 @@ export default function NewProductPage() {
         featured: form.featured,
         tags: form.tags.split(',').map(t => t.trim()).filter(Boolean),
         variants: parsedVariants.length > 0 ? parsedVariants : undefined,
+        images: images,
       } as any);
       router.push('/admin/products');
     } catch (err) {
@@ -389,6 +428,148 @@ export default function NewProductPage() {
                       <button type="button" className="admin-action-icon-btn delete" title="Șterge imagine" onClick={() => set('image', '')}>🗑️</button>
                     </div>
                   </div>
+                </div>
+              )}
+            </div>
+
+            {/* Galerie Imagini Produs */}
+            <div className="admin-field" style={{ marginTop: 24, borderTop: '1px solid var(--border)', paddingTop: 20 }}>
+              <label className="admin-label" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                🖼️ Galerie Imagini Produs (Suplimentare)
+              </label>
+              
+              <div
+                className={`admin-upload-zone ${galleryUploading ? 'uploading' : ''}`}
+                style={{
+                  border: '2px dashed var(--border)',
+                  borderRadius: 8,
+                  padding: '20px 16px',
+                  textAlign: 'center',
+                  background: 'var(--surface-2)',
+                  position: 'relative',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  gap: 8,
+                  cursor: 'pointer',
+                  transition: 'border-color 0.2s, background-color 0.2s',
+                }}
+              >
+                {galleryUploading ? (
+                  <>
+                    <div className="login-spinner" style={{ width: 24, height: 24, borderColor: 'var(--border)', borderTopColor: 'var(--accent)' }} />
+                    <span className="admin-upload-zone-text" style={{ fontSize: 13, fontWeight: 500 }}>Se încarcă imaginile...</span>
+                  </>
+                ) : (
+                  <>
+                    <span style={{ fontSize: 24 }}>📤</span>
+                    <span className="admin-upload-zone-text" style={{ fontSize: 13, fontWeight: 500 }}>
+                      Alegeți sau glisați imagini suplimentare pentru galerie
+                    </span>
+                    <span className="admin-upload-zone-hint" style={{ fontSize: 11, color: 'var(--text-muted)' }}>
+                      Puteți selecta mai multe fișiere deodată (PNG, JPG, WEBP)
+                    </span>
+                  </>
+                )}
+                <input
+                  type="file"
+                  id="gallery-file-input"
+                  multiple
+                  hidden
+                  accept="image/*"
+                  onChange={(e) => handleGalleryUpload(e.target.files)}
+                  disabled={galleryUploading}
+                />
+                <label htmlFor="gallery-file-input" style={{ position: 'absolute', inset: 0, cursor: 'pointer', zIndex: 1 }} />
+              </div>
+
+              {/* Grid Miniaturi Galerie */}
+              {images.length > 0 && (
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(100px, 1fr))', gap: 12, marginTop: 16 }}>
+                  {images.map((imgUrl, idx) => (
+                    <div
+                      key={imgUrl + idx}
+                      style={{
+                        position: 'relative',
+                        borderRadius: 8,
+                        border: '1.5px solid var(--border)',
+                        overflow: 'hidden',
+                        background: 'var(--surface-3)',
+                        paddingTop: '100%',
+                        boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
+                      }}
+                    >
+                      <img
+                        src={getProductImageUrl(imgUrl)}
+                        alt="Gallery preview"
+                        style={{
+                          position: 'absolute',
+                          inset: 0,
+                          width: '100%',
+                          height: '100%',
+                          objectFit: 'cover',
+                        }}
+                      />
+                      {/* Actions overlay */}
+                      <div
+                        style={{
+                          position: 'absolute',
+                          inset: 0,
+                          background: 'rgba(0,0,0,0.5)',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          justifyContent: 'space-between',
+                          padding: 6,
+                          opacity: 0,
+                          transition: 'opacity 0.2s',
+                          cursor: 'default',
+                        }}
+                        onMouseEnter={(e) => { e.currentTarget.style.opacity = '1'; }}
+                        onMouseLeave={(e) => { e.currentTarget.style.opacity = '0'; }}
+                      >
+                        <div style={{ alignSelf: 'flex-end' }}>
+                          <button
+                            type="button"
+                            onClick={() => removeGalleryImage(imgUrl)}
+                            style={{
+                              background: '#ef4444',
+                              color: 'white',
+                              border: 'none',
+                              borderRadius: 4,
+                              width: 24,
+                              height: 24,
+                              cursor: 'pointer',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              fontSize: 12,
+                            }}
+                            title="Șterge din galerie"
+                          >
+                            🗑️
+                          </button>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setAsMainImage(imgUrl)}
+                          style={{
+                            background: 'var(--primary)',
+                            color: 'white',
+                            border: 'none',
+                            borderRadius: 4,
+                            padding: '4px 6px',
+                            fontSize: 10,
+                            fontWeight: 600,
+                            cursor: 'pointer',
+                            textAlign: 'center',
+                            width: '100%',
+                          }}
+                        >
+                          Setează Principală
+                        </button>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               )}
             </div>

@@ -26,6 +26,9 @@ export class ProductEntity {
   @Column('jsonb', { nullable: true })
   variants: { label: string; price: number }[] | null;
 
+  @Column('text', { array: true, default: [] })
+  images: string[];
+
   @Column({ default: 'USD' })
   currency: string;
 
