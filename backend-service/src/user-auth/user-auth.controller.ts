@@ -20,15 +20,14 @@ class UserRegisterDto {
   @ApiProperty({ required: false, description: 'Număr de telefon în format internațional (ex: +40712345678)' })
   @IsOptional()
   @IsString()
-  @Matches(/^\+?[1-9]\d{6,14}$/, { message: 'Numărul de telefon trebuie să fie în format internațional (ex: +40712345678).' })
+  @Matches(/^\+?[1-9]\d{9,14}$/, { message: 'Numărul de telefon trebuie să conțină între 10 și 15 cifre (ex: +40712345678).' })
   phone?: string;
 
-  @ApiProperty({ required: false, description: 'Anul de naștere (1920 - anul curent - 18)' })
+  @ApiProperty({ required: false, description: 'Data de naștere (YYYY-MM-DD)' })
   @IsOptional()
-  @IsInt({ message: 'Anul de naștere trebuie să fie un număr întreg.' })
-  @Min(1920, { message: 'Anul de naștere nu poate fi mai mic decât 1920.' })
-  @Max(new Date().getFullYear() - 18, { message: 'Trebuie să aveți cel puțin 18 ani pentru a vă înregistra.' })
-  birthYear?: number;
+  @IsString()
+  @Matches(/^\d{4}-\d{2}-\d{2}$/, { message: 'Data de naștere trebuie să fie în formatul YYYY-MM-DD.' })
+  birthDate?: string;
 
   @ApiProperty({ required: false, description: 'Țara de origine' })
   @IsOptional()
@@ -104,7 +103,7 @@ export class UserAuthController {
     if (!isHuman) {
       throw new BadRequestException('Validarea anti-robot (captcha) a eșuat. Vă rugăm să reîncercați.');
     }
-    return this.userAuthService.register(dto.email, dto.password, dto.name, dto.phone, dto.birthYear, dto.country);
+    return this.userAuthService.register(dto.email, dto.password, dto.name, dto.phone, dto.birthDate, dto.country);
   }
 
   @Get('verify-email')

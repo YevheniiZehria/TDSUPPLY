@@ -159,6 +159,9 @@ export interface AdminUser {
   createdAt: string;
   updatedAt: string;
   orderCount: number;
+  phone?: string | null;
+  birthDate?: string | null;
+  country?: string | null;
 }
 
 /** Lista tuturor utilizatorilor cu numărul de comenzi */

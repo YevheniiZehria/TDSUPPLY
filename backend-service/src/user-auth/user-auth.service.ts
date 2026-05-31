@@ -43,12 +43,29 @@ export class UserAuthService {
     return this.config.get<string>('FRONTEND_URL', 'http://localhost:3000');
   }
 
-  async register(email: string, password: string, name: string, phone?: string, birthYear?: number, country?: string) {
+  async register(email: string, password: string, name: string, phone?: string, birthDate?: string, country?: string) {
     const emailLower = email.toLowerCase();
     const existing = await this.userRepo.findOne({ where: { email: emailLower } });
     if (existing) {
       throw new BadRequestException('Utilizatorul cu acest email există deja.');
     }
+
+    if (birthDate) {
+      const birth = new Date(birthDate);
+      if (isNaN(birth.getTime())) {
+        throw new BadRequestException('Data de naștere este invalidă.');
+      }
+      const today = new Date();
+      let age = today.getFullYear() - birth.getFullYear();
+      const m = today.getMonth() - birth.getMonth();
+      if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) {
+        age--;
+      }
+      if (age < 18) {
+        throw new BadRequestException('Trebuie să aveți cel puțin 18 ani pentru a vă înregistra.');
+      }
+    }
+
     const hash = await bcrypt.hash(password, 10);
     const token = crypto.randomBytes(32).toString('hex');
     const user = this.userRepo.create({
@@ -59,7 +76,7 @@ export class UserAuthService {
       isVerified: false,
       verificationToken: token,
       phone: phone ?? null,
-      birthYear: birthYear ?? null,
+      birthDate: birthDate ?? null,
       country: country ?? null,
     });
     const saved = await this.userRepo.save(user);

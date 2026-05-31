@@ -16,7 +16,7 @@ interface UserContextValue {
   token: string | null;
   loading: boolean;
   login: (email: string, password: string, captchaToken?: string) => Promise<void>;
-  register: (email: string, password: string, name: string, captchaToken?: string, phone?: string, birthYear?: number, country?: string) => Promise<void>;
+  register: (email: string, password: string, name: string, captchaToken?: string, phone?: string, birthDate?: string, country?: string) => Promise<void>;
   logout: () => void;
 }
 
@@ -60,11 +60,11 @@ export function UserProvider({ children }: { children: ReactNode }) {
     setUser(data.user);
   }, []);
 
-  const register = useCallback(async (email: string, password: string, name: string, captchaToken?: string, phone?: string, birthYear?: number, country?: string) => {
+  const register = useCallback(async (email: string, password: string, name: string, captchaToken?: string, phone?: string, birthDate?: string, country?: string) => {
     const res = await fetch(`${BASE}/auth/register`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password, name, captchaToken, phone, birthYear, country }),
+      body: JSON.stringify({ email, password, name, captchaToken, phone, birthDate, country }),
     });
     if (!res.ok) {
       const body = await res.json().catch(() => ({})) as { message?: string | string[] };

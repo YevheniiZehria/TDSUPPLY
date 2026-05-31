@@ -325,6 +325,23 @@ export default function AdminUsersPage() {
                             <div>
                               <div style={{ fontWeight: 600, fontSize: 14, color: 'var(--text)' }}>{user.name}</div>
                               <div style={{ fontSize: 12, color: 'var(--muted)' }}>{user.email}</div>
+                              <div style={{ display: 'flex', gap: 8, marginTop: 4, flexWrap: 'wrap' }}>
+                                {user.phone && (
+                                  <span style={{ fontSize: 11, color: 'var(--text-secondary)', background: 'var(--surface)', border: '1px solid var(--border)', padding: '1px 6px', borderRadius: 4, display: 'inline-flex', alignItems: 'center', gap: 3 }}>
+                                    <span>📞</span> {user.phone}
+                                  </span>
+                                )}
+                                {user.birthDate && (
+                                  <span style={{ fontSize: 11, color: 'var(--text-secondary)', background: 'var(--surface)', border: '1px solid var(--border)', padding: '1px 6px', borderRadius: 4, display: 'inline-flex', alignItems: 'center', gap: 3 }}>
+                                    <span>📅</span> {new Date(user.birthDate).toLocaleDateString('ro-RO', { day: 'numeric', month: 'short', year: 'numeric' })}
+                                  </span>
+                                )}
+                                {user.country && (
+                                  <span style={{ fontSize: 11, color: 'var(--text-secondary)', background: 'var(--surface)', border: '1px solid var(--border)', padding: '1px 6px', borderRadius: 4, display: 'inline-flex', alignItems: 'center', gap: 3 }}>
+                                    <span>📍</span> {user.country}
+                                  </span>
+                                )}
+                              </div>
                             </div>
                           </div>
                         </td>

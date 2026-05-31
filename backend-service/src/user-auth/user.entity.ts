@@ -20,8 +20,8 @@ export class UserEntity {
   @Column({ type: 'varchar', nullable: true })
   phone: string | null;
 
-  @Column({ type: 'int', nullable: true })
-  birthYear: number | null;
+  @Column({ type: 'varchar', length: 10, nullable: true })
+  birthDate: string | null;
 
   @Column({ type: 'varchar', length: 100, nullable: true })
   country: string | null;

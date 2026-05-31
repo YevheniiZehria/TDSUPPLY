@@ -38,24 +38,40 @@ const COUNTRIES = [
   'Altă țară',
 ];
 
-// Validare număr de telefon – format internațional
+// Validare număr de telefon – format internațional (între 10 și 15 cifre)
 function validatePhone(phone: string): string {
   if (!phone) return '';
-  const clean = phone.replace(/\s/g, '');
-  if (!/^\+?[1-9]\d{6,14}$/.test(clean)) {
-    return 'Format invalid. Exemplu: +40712345678 sau 0712345678';
+  const clean = phone.replace(/[\s\-\(\)\+]/g, ''); // Elimină spații, cratime, paranteze și semnul +
+  if (!/^\d+$/.test(clean)) {
+    return 'Numărul de telefon trebuie să conțină doar cifre.';
+  }
+  if (clean.length < 10) {
+    return 'Numărul de telefon este prea scurt (minim 10 cifre).';
+  }
+  if (clean.length > 15) {
+    return 'Numărul de telefon este prea lung (maxim 15 cifre).';
   }
   return '';
 }
 
-// Validare an naștere
-function validateBirthYear(year: string): string {
-  if (!year) return '';
-  const n = parseInt(year, 10);
-  const currentYear = new Date().getFullYear();
-  if (isNaN(n)) return 'Introduceți un an valid.';
-  if (n < 1920) return 'Anul nu poate fi înainte de 1920.';
-  if (n > currentYear - 18) return `Trebuie să aveți cel puțin 18 ani (max. ${currentYear - 18}).`;
+// Validare dată naștere (minim 18 ani)
+function validateBirthDate(birthDateStr: string): string {
+  if (!birthDateStr) return '';
+  const birth = new Date(birthDateStr);
+  if (isNaN(birth.getTime())) return 'Introduceți o dată validă.';
+  
+  const today = new Date();
+  let age = today.getFullYear() - birth.getFullYear();
+  const m = today.getMonth() - birth.getMonth();
+  if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) {
+    age--;
+  }
+  if (birth.getFullYear() < 1900) {
+    return 'Data nașterii este invalidă.';
+  }
+  if (age < 18) {
+    return 'Trebuie să aveți cel puțin 18 ani pentru a vă înregistra.';
+  }
   return '';
 }
 
@@ -93,35 +109,34 @@ function LoginContent() {
   // Câmpuri noi pentru înregistrare
   const [phone, setPhone]         = useState('');
   const [phoneError, setPhoneError] = useState('');
-  const [birthYear, setBirthYear] = useState('');
-  const [birthYearError, setBirthYearError] = useState('');
+  const [birthDate, setBirthDate] = useState('');
+  const [birthDateError, setBirthDateError] = useState('');
   const [country, setCountry]     = useState('România');
 
   // Validare în timp real pentru telefon
   function handlePhoneChange(val: string) {
-    // Permite doar +, cifre, spații
-    const cleaned = val.replace(/[^\d\s\+\-\(\)]/g, '');
-    setPhone(cleaned);
-    if (cleaned) setPhoneError(validatePhone(cleaned));
+    setPhone(val);
+    if (val) setPhoneError(validatePhone(val));
     else setPhoneError('');
   }
 
-  // Formatare telefon la blur (adaugă +40 dacă e număr românesc)
+  // Formatare telefon la blur (adaugă +40 dacă e număr românesc de mobil tipic)
   function handlePhoneBlur() {
     if (!phone) return;
-    const clean = phone.replace(/\s/g, '');
+    const clean = phone.replace(/[\s\-\(\)\+]/g, '');
     if (/^07\d{8}$/.test(clean)) {
       setPhone('+4' + clean);
+      setPhoneError(validatePhone('+4' + clean));
+    } else {
+      setPhoneError(validatePhone(phone));
     }
-    setPhoneError(validatePhone(phone));
   }
 
-  // Validare an naștere în timp real
-  function handleBirthYearChange(val: string) {
-    const numeric = val.replace(/\D/g, '').slice(0, 4);
-    setBirthYear(numeric);
-    if (numeric.length === 4) setBirthYearError(validateBirthYear(numeric));
-    else setBirthYearError('');
+  // Validare dată naștere în timp real
+  function handleBirthDateChange(val: string) {
+    setBirthDate(val);
+    if (val) setBirthDateError(validateBirthDate(val));
+    else setBirthDateError('');
   }
 
   // Încarcă și inițializează Cloudflare Turnstile
@@ -180,10 +195,10 @@ function LoginContent() {
         setError('Corectați numărul de telefon înainte de a continua.');
         return;
       }
-      const yearErr = validateBirthYear(birthYear);
-      if (birthYear && yearErr) {
-        setBirthYearError(yearErr);
-        setError('Corectați anul de naștere înainte de a continua.');
+      const dateErr = validateBirthDate(birthDate);
+      if (birthDate && dateErr) {
+        setBirthDateError(dateErr);
+        setError('Corectați data nașterii înainte de a continua.');
         return;
       }
     }
@@ -197,7 +212,7 @@ function LoginContent() {
           name.trim(),
           turnstileToken,
           phone || undefined,
-          birthYear ? parseInt(birthYear, 10) : undefined,
+          birthDate || undefined,
           country || undefined,
         );
         setSuccess(true);
@@ -221,8 +236,8 @@ function LoginContent() {
     setError('');
     setPhone('');
     setPhoneError('');
-    setBirthYear('');
-    setBirthYearError('');
+    setBirthDate('');
+    setBirthDateError('');
     setCountry('România');
   }
 
@@ -346,10 +361,10 @@ function LoginContent() {
 
                 {/* An naștere + Țara – pe același rând */}
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-                  {/* An naștere */}
+                  {/* Dată naștere */}
                   <div className="login-field" style={{ marginBottom: 0 }}>
-                    <label className="login-label" htmlFor="user-birth-year">
-                      An naștere
+                    <label className="login-label" htmlFor="user-birth-date">
+                      Dată naștere
                       <span style={{ fontSize: 11, fontWeight: 400, color: 'var(--text-muted)', marginLeft: 6 }}>(opțional)</span>
                     </label>
                     <div className="login-input-wrap" style={{ flexDirection: 'column', alignItems: 'stretch' }}>
@@ -358,21 +373,19 @@ function LoginContent() {
                           <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
                         </svg>
                         <input
-                          id="user-birth-year"
-                          type="text"
-                          inputMode="numeric"
-                          className={`login-input${birthYearError ? ' login-input--error' : birthYear.length === 4 && !birthYearError ? ' login-input--valid' : ''}`}
-                          placeholder={`Ex: ${new Date().getFullYear() - 30}`}
-                          value={birthYear}
-                          onChange={e => handleBirthYearChange(e.target.value)}
-                          onBlur={() => { if (birthYear) setBirthYearError(validateBirthYear(birthYear)); }}
+                          id="user-birth-date"
+                          type="date"
+                          className={`login-input${birthDateError ? ' login-input--error' : birthDate && !birthDateError ? ' login-input--valid' : ''}`}
+                          value={birthDate}
+                          onChange={e => handleBirthDateChange(e.target.value)}
+                          onBlur={() => { if (birthDate) setBirthDateError(validateBirthDate(birthDate)); }}
                           disabled={submitting || success}
-                          maxLength={4}
+                          style={{ paddingRight: 10 }}
                         />
                       </div>
-                      {birthYearError && (
+                      {birthDateError && (
                         <span style={{ fontSize: 11, color: 'var(--error, #ef4444)', marginTop: 4, display: 'block', paddingLeft: 2 }}>
-                          ⚠ {birthYearError}
+                          ⚠ {birthDateError}
                         </span>
                       )}
                     </div>
@@ -484,7 +497,7 @@ function LoginContent() {
               className="login-btn"
               disabled={
                 submitting || success || !email || !password ||
-                (isRegister && (!name || !!phoneError || !!birthYearError))
+                (isRegister && (!name || !!phoneError || !!birthDateError))
               }
             >
               {submitting
@@ -543,8 +556,8 @@ function LoginContent() {
           box-shadow: 0 0 0 2px rgba(34,197,94,0.15) !important;
         }
         .login-input option {
-          background: var(--surface, #1a1a2e);
-          color: var(--text, #fff);
+          background: var(--card, #ffffff);
+          color: var(--text-primary, #1A2332);
         }
       `}</style>
     </div>

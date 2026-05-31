@@ -4,14 +4,35 @@ import { UserProvider } from '@/contexts/UserContext';
 import { CartProvider } from '@/contexts/CartContext';
 
 export const metadata: Metadata = {
-  title: 'TD Supply — Furnizor Premium Materiale Dentare',
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'https://tdsupply.ro'),
+  title: {
+    default: 'TD Supply — Furnizor Premium Materiale Dentare & Stomatologice',
+    template: '%s | TD Supply',
+  },
   description:
-    'Distribuitor B2B de materiale și echipamente stomatologice premium. Implanturi, instrumente chirurgicale, materiale de restaurare — livrare rapidă în toată România.',
-  keywords: 'materiale dentare, implanturi dentare, distribuitor stomatologie, TD Supply, dental supply, 123',
+    'Distribuitor B2B oficial de consumabile stomatologice, echipamente și materiale dentare premium în România. Implanturi, biomateriale, instrumentar medical și dezinfectanți cu livrare rapidă din stoc.',
+  keywords: 'materiale dentare, consumabile stomatologice, implanturi dentare, echipamente cabinet stomatologic, clinica stomatologica, distribuitor stomatologie Romania, TD Supply, dental supply',
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-video-preview': -1,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+    },
+  },
   openGraph: {
-    title: 'TD Supply — Furnizor Premium Materiale Dentare',
-    description: 'Distribuitor B2B de materiale și echipamente stomatologice premium.',
+    title: 'TD Supply — Materiale Stomatologice & Consumabile Dentare',
+    description: 'Distribuitor B2B oficial de consumabile stomatologice, echipamente și materiale dentare premium. Livrare rapidă în toată România.',
+    url: './',
+    siteName: 'TD Supply',
+    locale: 'ro_RO',
     type: 'website',
+  },
+  alternates: {
+    canonical: './',
   },
 };
 
