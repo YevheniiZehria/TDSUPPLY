@@ -66,6 +66,12 @@ class DeliveryAddressDto {
   @IsOptional()
   @MaxLength(500, { message: 'Observațiile nu pot depăși 500 de caractere.' })
   observatii?: string;
+
+  @ApiProperty({ description: 'Număr de telefon de contact pentru livrare' })
+  @IsString()
+  @IsNotEmpty({ message: 'Numărul de telefon este obligatoriu.' })
+  @Matches(/^\+?[1-9]\d{9,14}$/, { message: 'Numărul de telefon de livrare trebuie să conțină între 10 și 15 cifre (ex: +40712345678).' })
+  telefon: string;
 }
 
 export class CreateOrderDto {

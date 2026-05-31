@@ -31,11 +31,11 @@ export class UserAuthService {
       throw new UnauthorizedException('Contul dumneavoastră nu a fost activat. Vă rugăm să verificați email-ul pentru link-ul de confirmare.');
     }
 
-    const payload = { sub: user.id, email: user.email, name: user.name, role: user.role };
+    const payload = { sub: user.id, email: user.email, name: user.name, role: user.role, phone: user.phone };
     const accessToken = await this.jwt.signAsync(payload);
     return {
       accessToken,
-      user: { id: user.id, email: user.email, name: user.name, role: user.role },
+      user: { id: user.id, email: user.email, name: user.name, role: user.role, phone: user.phone },
     };
   }
 

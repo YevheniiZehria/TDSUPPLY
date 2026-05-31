@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import Header from '@/components/Header';
@@ -36,6 +36,21 @@ function validateJudet(v: string) {
 function validateCodPostal(v: string) {
   if (!v.trim()) return 'Codul poștal este obligatoriu.';
   if (!/^\d{6}$/.test(v.trim())) return 'Codul poștal trebuie să conțină exact 6 cifre (ex: 400000).';
+  return '';
+}
+
+function validatePhone(phone: string): string {
+  if (!phone) return 'Numărul de telefon este obligatoriu.';
+  const clean = phone.replace(/[\s\-\(\)\+]/g, '');
+  if (!/^\d+$/.test(clean)) {
+    return 'Numărul de telefon trebuie să conțină doar cifre.';
+  }
+  if (clean.length < 10) {
+    return 'Numărul de telefon este prea scurt (minim 10 cifre).';
+  }
+  if (clean.length > 15) {
+    return 'Numărul de telefon este prea lung (maxim 15 cifre).';
+  }
   return '';
 }
 
@@ -143,7 +158,7 @@ const JUDETE = [
 export default function CartPage() {
   const router = useRouter();
   const { items, count, clearCart } = useCart();
-  const { user } = useUser();
+  const { user, updateUser } = useUser();
   const [lang, setLang] = useState<'ro' | 'en'>('ro');
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
@@ -160,6 +175,17 @@ export default function CartPage() {
   const [codPostalErr, setCodPostalErr] = useState('');
   const [observatii, setObservatii] = useState('');
 
+  // Câmp telefon livrare (precompletat din profilul utilizatorului)
+  const [telefon, setTelefon] = useState(user?.phone ?? '');
+  const [telefonErr, setTelefonErr] = useState('');
+
+  // Sincronizează telefonul când se încarcă profilul utilizatorului
+  useEffect(() => {
+    if (user?.phone) {
+      setTelefon(user.phone);
+    }
+  }, [user]);
+
   const total = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
   const currency = items.length > 0 ? items[0].currency : 'USD';
 
@@ -171,16 +197,35 @@ export default function CartPage() {
     else setCodPostalErr('');
   };
 
+  const handlePhoneChange = (val: string) => {
+    setTelefon(val);
+    if (val) setTelefonErr(validatePhone(val));
+    else setTelefonErr('');
+  };
+
+  const handlePhoneBlur = () => {
+    if (!telefon) return;
+    const clean = telefon.replace(/[\s\-\(\)\+]/g, '');
+    if (/^07\d{8}$/.test(clean)) {
+      setTelefon('+4' + clean);
+      setTelefonErr(validatePhone('+4' + clean));
+    } else {
+      setTelefonErr(validatePhone(telefon));
+    }
+  };
+
   const allFieldsValid = useCallback(() => {
     const s = validateStrada(strada);
     const o = validateOras(oras);
     const cp = validateCodPostal(codPostal);
+    const t = validatePhone(telefon);
     // judet este dropdown deci mereu valid dacă selectat
     setStradaErr(s);
     setOrasErr(o);
     setCodPostalErr(cp);
-    return !s && !o && !cp && !!judet;
-  }, [strada, oras, codPostal, judet]);
+    setTelefonErr(t);
+    return !s && !o && !cp && !t && !!judet;
+  }, [strada, oras, codPostal, telefon, judet]);
 
   async function handleCheckout() {
     if (!user) {
@@ -207,8 +252,10 @@ export default function CartPage() {
           judet,
           codPostal: codPostal.trim(),
           observatii: observatii.trim() || undefined,
+          telefon: telefon.trim(),
         },
       });
+      updateUser({ phone: telefon.trim() });
       setSuccess(true);
       clearCart();
     } catch (err) {
@@ -380,6 +427,22 @@ export default function CartPage() {
                         required
                         maxLength={6}
                         inputMode="numeric"
+                      />
+                    </div>
+
+                    {/* Telefon Contact Livrare */}
+                    <div>
+                      <FieldInput
+                        id="addr-telefon"
+                        label={lang === 'ro' ? 'Telefon Contact' : 'Contact Phone'}
+                        value={telefon}
+                        onChange={handlePhoneChange}
+                        onBlur={handlePhoneBlur}
+                        placeholder="Ex. 0712345678"
+                        error={telefonErr}
+                        required
+                        maxLength={20}
+                        type="tel"
                       />
                     </div>
 

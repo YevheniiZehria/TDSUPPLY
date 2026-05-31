@@ -4,6 +4,7 @@ import { Repository } from 'typeorm';
 import { OrderEntity, OrderItem } from './order.entity';
 import { MailService } from '../mail/mail.service';
 import { ProductsService } from '../products/products.service';
+import { UserEntity } from '../user-auth/user.entity';
 
 @Injectable()
 export class OrdersService {
@@ -12,6 +13,8 @@ export class OrdersService {
   constructor(
     @InjectRepository(OrderEntity)
     private readonly orderRepo: Repository<OrderEntity>,
+    @InjectRepository(UserEntity)
+    private readonly userRepo: Repository<UserEntity>,
     private readonly mailService: MailService,
     private readonly productsService: ProductsService,
   ) {}
@@ -51,6 +54,7 @@ export class OrdersService {
       judet: string;
       codPostal: string;
       observatii?: string;
+      telefon: string;
     };
   }): Promise<OrderEntity> {
     // Recalculare total și validare produse pe backend (Securitate)
@@ -92,6 +96,18 @@ export class OrdersService {
     });
 
     const savedOrder = await this.orderRepo.save(newOrder);
+
+    // Sincronizare număr de telefon în profilul utilizatorului dacă diferă sau e gol
+    try {
+      const user = await this.userRepo.findOne({ where: { id: orderData.userId } });
+      if (user && orderData.deliveryAddress.telefon && user.phone !== orderData.deliveryAddress.telefon) {
+        user.phone = orderData.deliveryAddress.telefon;
+        await this.userRepo.save(user);
+        this.logger.log(`Updated phone number for user ${user.id} to ${user.phone}`);
+      }
+    } catch (err) {
+      this.logger.error(`Eroare la actualizarea numărului de telefon al utilizatorului: ${err.message}`);
+    }
 
     // Trimitem email-uri asincron
     void this.mailService.sendOrderConfirmation({

@@ -43,6 +43,7 @@ export class OrderEntity {
     judet: string;
     codPostal: string;
     observatii?: string;
+    telefon: string;
   };
 
   @Column({ default: 'pending' })

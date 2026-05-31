@@ -83,6 +83,7 @@ export async function createOrder(data: {
     judet: string;
     codPostal: string;
     observatii?: string;
+    telefon: string;
   };
 }): Promise<any> {
   const token = localStorage.getItem('user_token');

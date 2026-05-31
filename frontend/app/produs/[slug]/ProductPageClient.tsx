@@ -60,14 +60,32 @@ export default function ProductPageClient({ slug }: { slug: string }) {
     setError(false);
     fetchProductBySlug(slug)
       .then((p) => {
-        setProduct(p);
-        setShowImage(Boolean(p.image));
-        // Selectează prima variantă implicit dacă există
+        // Sortează variantele în ordine crescătoare după dimensiune
         if (p.variants && p.variants.length > 0) {
+          p.variants = [...p.variants].sort((a, b) => {
+            const numRegex = /[-+]?[0-9]*\.?[0-9]+/;
+            const aMatch = a.label.match(numRegex);
+            const bMatch = b.label.match(numRegex);
+
+            if (aMatch && bMatch) {
+              const aNum = parseFloat(aMatch[0]);
+              const bNum = parseFloat(bMatch[0]);
+              if (aNum !== bNum) {
+                return aNum - bNum;
+              }
+            } else if (aMatch) {
+              return -1;
+            } else if (bMatch) {
+              return 1;
+            }
+            return a.label.localeCompare(b.label, undefined, { numeric: true, sensitivity: 'base' });
+          });
           setSelectedVariant(p.variants[0]);
         } else {
           setSelectedVariant(null);
         }
+        setProduct(p);
+        setShowImage(Boolean(p.image));
       })
       .catch(() => setError(true))
       .finally(() => setLoading(false));

@@ -9,6 +9,7 @@ export interface UserInfo {
   email: string;
   name?: string;
   role: string;
+  phone?: string | null;
 }
 
 interface UserContextValue {
@@ -18,11 +19,12 @@ interface UserContextValue {
   login: (email: string, password: string, captchaToken?: string) => Promise<void>;
   register: (email: string, password: string, name: string, captchaToken?: string, phone?: string, birthDate?: string, country?: string) => Promise<void>;
   logout: () => void;
+  updateUser: (fields: Partial<UserInfo>) => void;
 }
 
 const UserContext = createContext<UserContextValue>({
   user: null, token: null, loading: true,
-  login: async () => {}, register: async () => {}, logout: () => {},
+  login: async () => {}, register: async () => {}, logout: () => {}, updateUser: () => {},
 });
 
 export function UserProvider({ children }: { children: ReactNode }) {
@@ -79,8 +81,12 @@ export function UserProvider({ children }: { children: ReactNode }) {
     setUser(null);
   }, []);
 
+  const updateUser = useCallback((fields: Partial<UserInfo>) => {
+    setUser(prev => prev ? { ...prev, ...fields } : null);
+  }, []);
+
   return (
-    <UserContext.Provider value={{ user, token, loading, login, register, logout }}>
+    <UserContext.Provider value={{ user, token, loading, login, register, logout, updateUser }}>
       {children}
     </UserContext.Provider>
   );
