@@ -43,7 +43,7 @@ export class UserAuthService {
     return this.config.get<string>('FRONTEND_URL', 'http://localhost:3000');
   }
 
-  async register(email: string, password: string, name: string) {
+  async register(email: string, password: string, name: string, phone?: string, birthYear?: number, country?: string) {
     const emailLower = email.toLowerCase();
     const existing = await this.userRepo.findOne({ where: { email: emailLower } });
     if (existing) {
@@ -58,6 +58,9 @@ export class UserAuthService {
       role: 'user',
       isVerified: false,
       verificationToken: token,
+      phone: phone ?? null,
+      birthYear: birthYear ?? null,
+      country: country ?? null,
     });
     const saved = await this.userRepo.save(user);
     

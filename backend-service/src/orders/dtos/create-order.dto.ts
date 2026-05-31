@@ -1,5 +1,16 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsArray, IsNotEmpty, IsNumber, IsOptional, IsString, Min, ValidateNested } from 'class-validator';
+import {
+  IsArray,
+  IsNotEmpty,
+  IsNumber,
+  IsOptional,
+  IsString,
+  Min,
+  ValidateNested,
+  MinLength,
+  MaxLength,
+  Matches,
+} from 'class-validator';
 import { Type } from 'class-transformer';
 
 class OrderItemDto {
@@ -15,34 +26,45 @@ class OrderItemDto {
 }
 
 class DeliveryAddressDto {
-  @ApiProperty()
+  @ApiProperty({ description: 'Strada și numărul (ex: Str. Clinicilor, Nr. 12)' })
   @IsString()
-  @IsNotEmpty()
+  @IsNotEmpty({ message: 'Strada și numărul sunt obligatorii.' })
+  @MinLength(5, { message: 'Strada trebuie să aibă cel puțin 5 caractere.' })
+  @MaxLength(200, { message: 'Strada nu poate depăși 200 de caractere.' })
   strada: string;
 
-  @ApiPropertyOptional()
+  @ApiPropertyOptional({ description: 'Bloc, Scară, Apartament (opțional)' })
   @IsString()
   @IsOptional()
+  @MaxLength(100, { message: 'Câmpul Bloc/Ap nu poate depăși 100 de caractere.' })
   bloc?: string;
 
-  @ApiProperty()
+  @ApiProperty({ description: 'Orașul de livrare (ex: Cluj-Napoca)' })
   @IsString()
-  @IsNotEmpty()
+  @IsNotEmpty({ message: 'Orașul este obligatoriu.' })
+  @MinLength(2, { message: 'Orașul trebuie să aibă cel puțin 2 caractere.' })
+  @MaxLength(100, { message: 'Orașul nu poate depăși 100 de caractere.' })
   oras: string;
 
-  @ApiProperty()
+  @ApiProperty({ description: 'Județul de livrare (ex: Cluj)' })
   @IsString()
-  @IsNotEmpty()
+  @IsNotEmpty({ message: 'Județul este obligatoriu.' })
+  @MinLength(2, { message: 'Județul trebuie să aibă cel puțin 2 caractere.' })
+  @MaxLength(50, { message: 'Județul nu poate depăși 50 de caractere.' })
   judet: string;
 
-  @ApiProperty()
+  @ApiProperty({ description: 'Codul poștal (6 cifre pentru România, ex: 400000)' })
   @IsString()
-  @IsNotEmpty()
+  @IsNotEmpty({ message: 'Codul poștal este obligatoriu.' })
+  @Matches(/^\d{6}$/, {
+    message: 'Codul poștal trebuie să conțină exact 6 cifre (ex: 400000).',
+  })
   codPostal: string;
 
-  @ApiPropertyOptional()
+  @ApiPropertyOptional({ description: 'Observații sau instrucțiuni de livrare (opțional)' })
   @IsString()
   @IsOptional()
+  @MaxLength(500, { message: 'Observațiile nu pot depăși 500 de caractere.' })
   observatii?: string;
 }
 

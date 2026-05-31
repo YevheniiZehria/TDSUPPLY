@@ -18,6 +18,15 @@ export class UserEntity {
   role: string;
 
   @Column({ type: 'varchar', nullable: true })
+  phone: string | null;
+
+  @Column({ type: 'int', nullable: true })
+  birthYear: number | null;
+
+  @Column({ type: 'varchar', length: 100, nullable: true })
+  country: string | null;
+
+  @Column({ type: 'varchar', nullable: true })
   resetToken: string | null;
 
   @Column({ type: 'timestamp', nullable: true })

@@ -1,6 +1,6 @@
 import { Body, Controller, Get, HttpCode, HttpStatus, Post, Req, Query, UseGuards, BadRequestException, Logger } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth, ApiOperation, ApiProperty } from '@nestjs/swagger';
-import { IsEmail, IsString, MinLength } from 'class-validator';
+import { IsEmail, IsString, MinLength, IsOptional, IsInt, Min, Max, Matches } from 'class-validator';
 import { ThrottlerGuard, Throttle } from '@nestjs/throttler';
 import { ConfigService } from '@nestjs/config';
 import { UserJwtGuard } from './user-jwt.guard';
@@ -16,7 +16,27 @@ class UserRegisterDto {
   @ApiProperty() @IsEmail() email: string;
   @ApiProperty() @IsString() @MinLength(6) password: string;
   @ApiProperty() @IsString() name: string;
-  @ApiProperty({ required: false }) @IsString() captchaToken?: string;
+
+  @ApiProperty({ required: false, description: 'Număr de telefon în format internațional (ex: +40712345678)' })
+  @IsOptional()
+  @IsString()
+  @Matches(/^\+?[1-9]\d{6,14}$/, { message: 'Numărul de telefon trebuie să fie în format internațional (ex: +40712345678).' })
+  phone?: string;
+
+  @ApiProperty({ required: false, description: 'Anul de naștere (1920 - anul curent - 18)' })
+  @IsOptional()
+  @IsInt({ message: 'Anul de naștere trebuie să fie un număr întreg.' })
+  @Min(1920, { message: 'Anul de naștere nu poate fi mai mic decât 1920.' })
+  @Max(new Date().getFullYear() - 18, { message: 'Trebuie să aveți cel puțin 18 ani pentru a vă înregistra.' })
+  birthYear?: number;
+
+  @ApiProperty({ required: false, description: 'Țara de origine' })
+  @IsOptional()
+  @IsString()
+  @MinLength(2, { message: 'Țara trebuie să aibă cel puțin 2 caractere.' })
+  country?: string;
+
+  @ApiProperty({ required: false }) @IsOptional() @IsString() captchaToken?: string;
 }
 
 class ForgotPasswordDto {
@@ -84,7 +104,7 @@ export class UserAuthController {
     if (!isHuman) {
       throw new BadRequestException('Validarea anti-robot (captcha) a eșuat. Vă rugăm să reîncercați.');
     }
-    return this.userAuthService.register(dto.email, dto.password, dto.name);
+    return this.userAuthService.register(dto.email, dto.password, dto.name, dto.phone, dto.birthYear, dto.country);
   }
 
   @Get('verify-email')
