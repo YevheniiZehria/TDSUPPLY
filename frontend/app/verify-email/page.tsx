@@ -2,14 +2,31 @@
 
 import { useEffect, useState, Suspense } from 'react';
 import Link from 'next/link';
-import { useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 
 function VerifyEmailContent() {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const token = searchParams.get('token');
   
   const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading');
   const [message, setMessage] = useState('Se activează contul dumneavoastră...');
+  const [countdown, setCountdown] = useState(3);
+
+  useEffect(() => {
+    if (status !== 'success') return;
+    const interval = setInterval(() => {
+      setCountdown((prev) => {
+        if (prev <= 1) {
+          clearInterval(interval);
+          router.push('/autentificare');
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [status, router]);
 
   useEffect(() => {
     if (!token) {
@@ -74,7 +91,13 @@ function VerifyEmailContent() {
                 ✓
               </div>
               <h1 className="login-title" style={{ fontSize: 20, color: '#166534' }}>Cont activat!</h1>
-              <p className="login-subtitle" style={{ margin: '0 0 10px 0', lineHeight: 1.5 }}>{message}</p>
+              <p className="login-subtitle" style={{ margin: '0 0 10px 0', lineHeight: 1.5 }}>
+                {message}
+                <br />
+                <span style={{ fontSize: 13, color: 'var(--text-muted)', display: 'block', marginTop: 8 }}>
+                  Vă redirecționăm automat la pagina de autentificare în {countdown} secunde...
+                </span>
+              </p>
               
               <Link href="/autentificare" className="login-btn" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, width: '100%' }}>
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">

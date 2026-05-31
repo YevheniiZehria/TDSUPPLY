@@ -113,6 +113,29 @@ export class UserAuthService {
     return { message: 'Contul a fost activat cu succes! Acum te poți autentifica.' };
   }
 
+  async resendVerificationEmail(email: string): Promise<{ message: string }> {
+    const user = await this.userRepo.findOne({ where: { email: email.toLowerCase() } });
+    if (!user) {
+      throw new BadRequestException('Nu există un cont înregistrat cu această adresă de email.');
+    }
+    if (user.isVerified) {
+      throw new BadRequestException('Acest cont este deja activat. Vă puteți autentifica.');
+    }
+
+    const token = crypto.randomBytes(32).toString('hex');
+    user.verificationToken = token;
+    await this.userRepo.save(user);
+
+    const frontendUrl = this.getFrontendUrl();
+    const verificationLink = `${frontendUrl}/verify-email?token=${token}`;
+
+    void this.mailService.sendVerificationEmail(user.email, user.name, verificationLink).catch(err => {
+      this.userRepo.manager.connection.logger.log('log', `Eroare trimitere email verificare la retrimitere: ${err.message}`);
+    });
+
+    return { message: 'Un nou link de confirmare a fost trimis pe adresa de email.' };
+  }
+
   async findById(id: string): Promise<Omit<UserEntity, 'passwordHash'> | null> {
     const user = await this.userRepo.findOne({ where: { id } });
     if (!user) return null;

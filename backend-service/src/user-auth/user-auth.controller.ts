@@ -42,6 +42,10 @@ class ForgotPasswordDto {
   @ApiProperty() @IsEmail() email: string;
 }
 
+class ResendVerificationDto {
+  @ApiProperty() @IsEmail() email: string;
+}
+
 class ResetPasswordDto {
   @ApiProperty() @IsString() token: string;
   @ApiProperty() @IsString() @MinLength(6) password: string;
@@ -107,10 +111,16 @@ export class UserAuthController {
   }
 
   @Get('verify-email')
-  @ApiOperation({ summary: 'Verifică emailul utilizatorului folosind tokenul primit' })
+  @ApiOperation({ summary: 'Confirmare email cu token' })
   async verifyEmail(@Query('token') token: string) {
     if (!token) throw new BadRequestException('Token-ul este obligatoriu.');
     return this.userAuthService.verifyEmail(token);
+  }
+
+  @Post('resend-verification')
+  @ApiOperation({ summary: 'Retrimite email de confirmare cont' })
+  async resendVerification(@Body() dto: ResendVerificationDto) {
+    return this.userAuthService.resendVerificationEmail(dto.email);
   }
 
   @Post('forgot-password')

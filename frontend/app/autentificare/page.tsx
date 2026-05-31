@@ -100,6 +100,8 @@ function validateCodPostal(cod: string): string {
   return '';
 }
 
+const BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
+
 function LoginContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -122,6 +124,37 @@ function LoginContent() {
   const [birthDate, setBirthDate] = useState('');
   const [birthDateError, setBirthDateError] = useState('');
   const [country, setCountry]     = useState('România');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [confirmPasswordError, setConfirmPasswordError] = useState('');
+  const [resendingVerification, setResendingVerification] = useState(false);
+  const [resendSuccess, setResendSuccess] = useState('');
+
+  async function handleResendVerification() {
+    if (!email.trim()) {
+      setError('Introduceți adresa de email pentru a retrimite link-ul de activare.');
+      return;
+    }
+    setResendingVerification(true);
+    setError('');
+    setResendSuccess('');
+    try {
+      const res = await fetch(`${BASE}/auth/resend-verification`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: email.trim() }),
+      });
+      const body = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(body.message ?? 'Eroare la retrimiterea emailului.');
+      }
+      setResendSuccess(body.message || 'Un nou link de confirmare a fost trimis pe adresa de email.');
+      setError('');
+    } catch (err) {
+      setError((err as Error).message);
+    } finally {
+      setResendingVerification(false);
+    }
+  }
 
   // Validare în timp real pentru telefon
   function handlePhoneChange(val: string) {
@@ -210,6 +243,11 @@ function LoginContent() {
 
     if (isRegister) {
       // Validări suplimentare înainte de submit
+      if (password !== confirmPassword) {
+        setError('Parolele introduse nu coincid.');
+        setConfirmPasswordError('Parolele nu coincid.');
+        return;
+      }
       if (!name.trim()) {
         setError('Te rugăm să introduci denumirea cabinetului / firmei.');
         return;
@@ -273,6 +311,9 @@ function LoginContent() {
     setBirthDate('');
     setBirthDateError('');
     setCountry('România');
+    setConfirmPassword('');
+    setConfirmPasswordError('');
+    setResendSuccess('');
   }
 
   return (
@@ -316,12 +357,43 @@ function LoginContent() {
             </div>
           )}
 
-          {error && (
-            <div className="login-error">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+          {resendSuccess && (
+            <div className="login-success" style={{ lineHeight: '1.4', marginBottom: 16 }}>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" style={{ flexShrink: 0 }}>
+                <path d="M20 6L9 17l-5-5"/>
               </svg>
-              {error}
+              <span>{resendSuccess}</span>
+            </div>
+          )}
+
+          {error && (
+            <div className="login-error" style={{ display: 'flex', flexDirection: 'column', gap: 8, alignItems: 'flex-start', marginBottom: 16 }}>
+              <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" style={{ flexShrink: 0 }}>
+                  <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+                </svg>
+                <span>{error}</span>
+              </div>
+              {error.includes('activat') && (
+                <button
+                  type="button"
+                  onClick={handleResendVerification}
+                  disabled={resendingVerification}
+                  style={{
+                    background: 'rgba(239, 68, 68, 0.1)',
+                    border: '1px solid rgba(239, 68, 68, 0.2)',
+                    color: '#ef4444',
+                    padding: '4px 10px',
+                    borderRadius: 4,
+                    fontSize: 12,
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    marginLeft: 24,
+                  }}
+                >
+                  {resendingVerification ? 'Se trimite...' : 'Retrimite email-ul de activare'}
+                </button>
+              )}
             </div>
           )}
 
@@ -510,6 +582,43 @@ function LoginContent() {
               )}
             </div>
 
+            {/* ── CONFIRMĂ PAROLĂ (doar la înregistrare) ── */}
+            {isRegister && (
+              <div className="login-field" style={{ marginTop: 12 }}>
+                <label className="login-label" htmlFor="user-confirm-password">
+                  Confirmă Parolă <span style={{ color: 'var(--primary)' }}>*</span>
+                </label>
+                <div className="login-input-wrap">
+                  <svg className="login-input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                    <path d="M7 11V7a5 5 0 0110 0v4"/>
+                  </svg>
+                  <input
+                    id="user-confirm-password"
+                    type={showPass ? 'text' : 'password'}
+                    className="login-input"
+                    placeholder="••••••••"
+                    value={confirmPassword}
+                    onChange={e => {
+                      setConfirmPassword(e.target.value);
+                      if (e.target.value && e.target.value !== password) {
+                        setConfirmPasswordError('Parolele nu coincid.');
+                      } else {
+                        setConfirmPasswordError('');
+                      }
+                    }}
+                    required
+                    disabled={submitting || success}
+                  />
+                </div>
+                {confirmPasswordError && (
+                  <span style={{ fontSize: 11, color: 'var(--error, #ef4444)', marginTop: 4, display: 'block', paddingLeft: 2 }}>
+                    ⚠ {confirmPasswordError}
+                  </span>
+                )}
+              </div>
+            )}
+
             {!isRegister && (
               <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: -8, marginBottom: 16 }}>
                 <Link href="/recuperare-parola" style={{ fontSize: 13, color: 'var(--primary)', textDecoration: 'none', fontWeight: 600 }}>
@@ -529,7 +638,7 @@ function LoginContent() {
               className="login-btn"
               disabled={
                 submitting || success || !email || !password ||
-                (isRegister && (!name || !!phoneError || !!birthDateError))
+                (isRegister && (!name || !!phoneError || !!birthDateError || !confirmPassword || !!confirmPasswordError))
               }
             >
               {submitting
