@@ -9,6 +9,13 @@ import { formatCurrency, type Product } from '@/lib/api';
 
 const CATEGORIES_FILTER = [
   { id: 'all', label: 'Toate' },
+  { id: 'zirconia', label: 'Discuri Zirconia' },
+  { id: 'glass-ceramic', label: 'Glass Ceramică' },
+  { id: 'milling-machines', label: 'Frezat & Cuptoare' },
+  { id: 'scanners-printers', label: 'Scannere & Imprimante' },
+  { id: 'peek-pmma-wax', label: 'PEEK/PMMA/Wax' },
+  { id: 'composite-materials', label: 'Compozite' },
+  // Păstrăm și categoriile vechi în caz că mai există produse vechi de test în DB
   { id: 'implanturi', label: 'Implanturi' },
   { id: 'componente-protetice', label: 'Protetice' },
   { id: 'chirurgie', label: 'Chirurgie' },
