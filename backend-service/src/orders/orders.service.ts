@@ -74,12 +74,31 @@ export class OrdersService {
 
       let itemPrice = product.price;
       let itemName = product.name.ro;
+      let itemInStock = product.inStock;
+      let itemIsPreorder = product.isPreorder;
 
       if (variantLabel && product.variants) {
         const variant = product.variants.find(v => v.label === variantLabel);
         if (variant) {
           itemPrice = variant.price;
           itemName = `${product.name.ro} (${variant.label})`;
+          itemInStock = variant.inStock !== false && product.inStock; // Dacă varianta e explicitly inStock: false
+          itemIsPreorder = variant.isPreorder ?? product.isPreorder;
+        }
+      }
+
+      // Validare Stoc
+      if (!itemInStock && !itemIsPreorder) {
+        throw new BadRequestException(`Produsul "${itemName}" nu mai este în stoc. Vă rugăm să-l eliminați din coș pentru a continua.`);
+      }
+
+      // Validare Culori (Nuanțe)
+      if (product.colors && product.colors.length > 0) {
+        if (!item.color) {
+          throw new BadRequestException(`Produsul "${itemName}" necesită selectarea unei nuanțe/culori.`);
+        }
+        if (!product.colors.includes(item.color)) {
+          throw new BadRequestException(`Nuanța "${item.color}" pentru produsul "${itemName}" este invalidă.`);
         }
       }
 

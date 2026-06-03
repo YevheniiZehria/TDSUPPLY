@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { CategoryEntity } from './category.entity';
 import { CreateCategoryDto, UpdateCategoryDto } from './dtos/category.dto';
+import { ProductEntity } from '../products/product.entity';
 
 // Funcție utilitară pentru slug
 function slugify(text: string): string {
@@ -22,6 +23,8 @@ export class CategoriesService {
   constructor(
     @InjectRepository(CategoryEntity)
     private readonly categoryRepo: Repository<CategoryEntity>,
+    @InjectRepository(ProductEntity)
+    private readonly productRepo: Repository<ProductEntity>,
   ) {}
 
   async findAll(): Promise<CategoryEntity[]> {
@@ -60,6 +63,13 @@ export class CategoriesService {
 
   async remove(id: string): Promise<void> {
     const cat = await this.findOne(id);
+    
+    // Verificăm dacă există produse asociate cu această categorie
+    const productCount = await this.productRepo.count({ where: { category: id } });
+    if (productCount > 0) {
+      throw new BadRequestException(`Nu poți șterge această categorie deoarece există ${productCount} produse asociate cu ea. Mută produsele în altă categorie mai întâi.`);
+    }
+
     await this.categoryRepo.remove(cat);
   }
 }
