@@ -9,12 +9,17 @@ export default function AdminCategories() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [toast, setToast] = useState('');
 
-  // Modal stare
+  // Modal stare pentru editare/adăugare
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [formData, setFormData] = useState({ nameRo: '', nameEn: '' });
   const [saving, setSaving] = useState(false);
+
+  // Modal stare pentru ștergere
+  const [deleteTarget, setDeleteTarget] = useState<Category | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     loadCategories();
@@ -44,20 +49,28 @@ export default function AdminCategories() {
     setIsModalOpen(true);
   }
 
-  async function handleDelete(id: string) {
-    if (!confirm('Sigur doriți să ștergeți această categorie?')) return;
+  async function handleDelete() {
+    if (!deleteTarget) return;
+    setDeleting(true);
     try {
-      await adminDeleteCategory(id.trim());
+      await adminDeleteCategory(deleteTarget.id.trim());
       await loadCategories();
+      setToast(`Categoria "${deleteTarget.name.ro}" a fost ștearsă cu succes!`);
+      setTimeout(() => setToast(''), 3000);
     } catch (err: any) {
-      alert('Eroare: ' + JSON.stringify(err.message || err));
+      setToast('Eroare: ' + (err.message || JSON.stringify(err)));
+      setTimeout(() => setToast(''), 4000);
+    } finally {
+      setDeleting(false);
+      setDeleteTarget(null);
     }
   }
 
   async function handleSave(e: React.FormEvent) {
     e.preventDefault();
     if (!formData.nameRo || !formData.nameEn) {
-      alert('Ambele limbi sunt obligatorii!');
+      setToast('Ambele limbi sunt obligatorii!');
+      setTimeout(() => setToast(''), 3000);
       return;
     }
     setSaving(true);
@@ -68,13 +81,17 @@ export default function AdminCategories() {
 
       if (editingId) {
         await adminUpdateCategory(editingId, payload);
+        setToast(`Categoria a fost actualizată!`);
       } else {
         await adminCreateCategory(payload);
+        setToast(`Categoria a fost adăugată cu succes!`);
       }
+      setTimeout(() => setToast(''), 3000);
       setIsModalOpen(false);
       await loadCategories();
     } catch (err: any) {
-      alert('Eroare la salvare: ' + (err.message || JSON.stringify(err)));
+      setToast('Eroare la salvare: ' + (err.message || JSON.stringify(err)));
+      setTimeout(() => setToast(''), 4000);
     } finally {
       setSaving(false);
     }
@@ -141,7 +158,7 @@ export default function AdminCategories() {
                           </svg>
                         </button>
                         <button
-                          onClick={() => handleDelete(cat.id)}
+                          onClick={() => setDeleteTarget(cat)}
                           className="admin-action-icon-btn delete"
                           title="Șterge"
                           style={{ border: 'none', background: 'none' }}
@@ -208,6 +225,30 @@ export default function AdminCategories() {
           </div>
         </div>
       )}
+
+      {/* Delete confirmation modal */}
+      {deleteTarget && (
+        <div className="admin-modal-overlay" onClick={() => setDeleteTarget(null)}>
+          <div className="admin-modal" onClick={e => e.stopPropagation()}>
+            <div className="admin-modal-icon">🗑️</div>
+            <h3 className="admin-modal-title">Confirmi ștergerea?</h3>
+            <p className="admin-modal-text">
+              Categoria <strong>„{deleteTarget.name.ro}"</strong> va fi ștearsă permanent.
+            </p>
+            <div className="admin-modal-actions">
+              <button className="admin-btn-danger" onClick={handleDelete} disabled={deleting}>
+                {deleting ? 'Se șterge...' : 'Da, șterge'}
+              </button>
+              <button className="admin-btn-ghost" onClick={() => setDeleteTarget(null)}>
+                Anulează
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Toast */}
+      {toast && <div className="admin-toast">{toast}</div>}
     </AdminLayout>
   );
 }
