@@ -2,9 +2,9 @@ import { Controller, Get, Post, Put, Delete, Body, Param, UseGuards } from '@nes
 import { CategoriesService } from './categories.service';
 import { CreateCategoryDto, UpdateCategoryDto } from './dtos/category.dto';
 import { ApiTags, ApiOperation } from '@nestjs/swagger';
-import { AdminAuthGuard } from '../admin/admin-auth.guard';
+import { JwtAuthGuard } from '../admin/jwt-auth.guard';
 import { RolesGuard } from '../admin/roles.guard';
-import { Roles } from '../admin/roles.decorator';
+import { Roles } from '../admin/decorators/roles.decorator';
 
 @ApiTags('Categories')
 @Controller('categories')
@@ -24,7 +24,7 @@ export class CategoriesController {
   }
 
   @Post()
-  @UseGuards(AdminAuthGuard, RolesGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('admin', 'manager')
   @ApiOperation({ summary: 'Adaugă o categorie nouă (Admin)' })
   create(@Body() dto: CreateCategoryDto) {
@@ -32,7 +32,7 @@ export class CategoriesController {
   }
 
   @Put(':id')
-  @UseGuards(AdminAuthGuard, RolesGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('admin', 'manager')
   @ApiOperation({ summary: 'Editează o categorie (Admin)' })
   update(@Param('id') id: string, @Body() dto: UpdateCategoryDto) {
@@ -40,7 +40,7 @@ export class CategoriesController {
   }
 
   @Delete(':id')
-  @UseGuards(AdminAuthGuard, RolesGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('admin')
   @ApiOperation({ summary: 'Șterge o categorie (Admin)' })
   remove(@Param('id') id: string) {
