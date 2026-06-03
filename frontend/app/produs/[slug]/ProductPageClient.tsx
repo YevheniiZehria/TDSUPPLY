@@ -92,6 +92,11 @@ export default function ProductPageClient({ slug }: { slug: string }) {
         } else {
           setSelectedVariant(null);
         }
+        if (p.colors && p.colors.length > 0) {
+          setSelectedColor(p.colors[0]);
+        } else {
+          setSelectedColor(null);
+        }
         setProduct(p);
         setShowImage(Boolean(p.image));
         setActiveImage(p.image ?? '');
