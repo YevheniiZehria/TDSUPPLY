@@ -23,6 +23,11 @@ class OrderItemDto {
   @IsNumber()
   @Min(1)
   quantity: number;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  color?: string;
 }
 
 class DeliveryAddressDto {

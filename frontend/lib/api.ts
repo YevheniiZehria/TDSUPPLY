@@ -1,15 +1,16 @@
 const BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
 
-export interface ProductVariant { label: string; price: number; inStock?: boolean; }
+export interface ProductVariant { label: string; price: number; inStock?: boolean; isPreorder?: boolean; }
 export interface ProductName { ro: string; en: string; }
 export interface Product {
   id: string; slug: string; code: string;
   name: ProductName; category: string;
   description: ProductName;
   price: number; currency: string; unit: string;
-  image: string; video?: string; inStock: boolean; featured: boolean;
+  image: string; video?: string; inStock: boolean; isPreorder: boolean; featured: boolean;
   tags: string[]; createdAt: string; updatedAt: string;
   variants?: ProductVariant[] | null;
+  colors?: string[];
   images?: string[];
 }
 
@@ -76,7 +77,7 @@ export async function fetchProductById(id: string): Promise<Product> {
 
 /** Comenzi */
 export async function createOrder(data: {
-  items: { id: string; quantity: number }[];
+  items: { id: string; quantity: number; color?: string }[];
   deliveryAddress: {
     strada: string;
     bloc?: string;
@@ -92,6 +93,7 @@ export async function createOrder(data: {
     items: data.items.map(item => ({
       id: item.id,
       quantity: item.quantity,
+      color: item.color,
     })),
     deliveryAddress: data.deliveryAddress,
   };

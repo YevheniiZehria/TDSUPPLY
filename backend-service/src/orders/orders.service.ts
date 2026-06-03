@@ -46,7 +46,7 @@ export class OrdersService {
     userId: string;
     userEmail: string;
     userName: string;
-    items: { id: string; quantity: number }[];
+    items: { id: string; quantity: number; color?: string }[];
     deliveryAddress: {
       strada: string;
       bloc?: string;
@@ -83,6 +83,10 @@ export class OrdersService {
         }
       }
 
+      if (item.color) {
+        itemName += ` - Culoare: ${item.color}`;
+      }
+
       currency = product.currency; // Presupunem aceeași monedă pentru toate produsele
       calculatedTotal += itemPrice * item.quantity;
 
@@ -93,6 +97,7 @@ export class OrdersService {
         price: itemPrice,
         currency: product.currency,
         quantity: item.quantity,
+        color: item.color,
       });
     }
 

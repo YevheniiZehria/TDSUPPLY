@@ -23,13 +23,14 @@ export interface CartItem {
   quantity: number;
   variantLabel?: string;
   inStock: boolean;
+  color?: string;
 }
 
 interface CartContextValue {
   items: CartItem[];
   count: number;
   isDrawerOpen: boolean;
-  addItem: (product: Product, lang: 'ro' | 'en', variant?: ProductVariant | null) => void;
+  addItem: (product: Product, lang: 'ro' | 'en', variant?: ProductVariant | null, color?: string | null) => void;
   removeItem: (id: string) => void;
   updateQuantity: (id: string, delta: number) => void;
   clearCart: () => void;
@@ -76,9 +77,10 @@ export function CartProvider({ children }: { children: ReactNode }) {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
   }, [hydrated, items]);
 
-  const addItem = useCallback((product: Product, lang: 'ro' | 'en', variant?: ProductVariant | null) => {
+  const addItem = useCallback((product: Product, lang: 'ro' | 'en', variant?: ProductVariant | null, color?: string | null) => {
     setItems((current) => {
-      const itemId = variant ? `${product.id}-${variant.label}` : product.id;
+      let itemId = variant ? `${product.id}-${variant.label}` : product.id;
+      if (color) itemId += `-${color}`;
       const existing = current.find((item) => item.id === itemId);
       if (existing) {
         return current.map((item) =>
@@ -87,7 +89,10 @@ export function CartProvider({ children }: { children: ReactNode }) {
       }
 
       const itemPrice = variant ? variant.price : product.price;
-      const itemName = variant ? `${product.name[lang]} (${variant.label})` : product.name[lang];
+      let itemName = variant ? `${product.name[lang]} (${variant.label})` : product.name[lang];
+      if (color) {
+        itemName += ` - ${lang === 'ro' ? 'Nuanță' : 'Shade'}: ${color}`;
+      }
       const itemInStock = variant ? (variant.inStock !== false && product.inStock) : product.inStock;
 
       return [
@@ -102,6 +107,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
           quantity: 1,
           variantLabel: variant?.label,
           inStock: itemInStock,
+          color: color || undefined,
         },
       ];
     });

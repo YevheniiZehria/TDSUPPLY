@@ -24,7 +24,10 @@ export class ProductEntity {
   price: number;
 
   @Column('jsonb', { nullable: true })
-  variants: { label: string; price: number; inStock?: boolean }[] | null;
+  variants: { label: string; price: number; inStock?: boolean; isPreorder?: boolean }[] | null;
+
+  @Column('text', { array: true, default: [] })
+  colors: string[];
 
   @Column('text', { array: true, default: [] })
   images: string[];
@@ -43,6 +46,9 @@ export class ProductEntity {
 
   @Column({ default: true })
   inStock: boolean;
+
+  @Column({ default: false })
+  isPreorder: boolean;
 
   @Column({ default: false })
   featured: boolean;

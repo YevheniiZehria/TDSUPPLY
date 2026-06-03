@@ -60,9 +60,13 @@ export default function ProductCard({ product, lang }: ProductCardProps) {
           <span className="product-badge badge-stock">
             {lang === 'ro' ? '✓ În stoc' : '✓ In stock'}
           </span>
-        ) : (
+        ) : product.isPreorder ? (
           <span className="product-badge badge-preorder" style={{ background: '#FFF7ED', color: '#EA580C', border: '1px solid #FED7AA' }}>
             {lang === 'ro' ? 'Precomandă' : 'Pre-order'}
+          </span>
+        ) : (
+          <span className="product-badge badge-unavailable" style={{ background: '#FEF2F2', color: '#DC2626', border: '1px solid #FECACA' }}>
+            {lang === 'ro' ? '✗ Indisponibil' : '✗ Out of stock'}
           </span>
         )}
         {product.featured && (
@@ -88,6 +92,8 @@ export default function ProductCard({ product, lang }: ProductCardProps) {
         <button
           className="btn-add-cart"
           onClick={handleAddToCart}
+          disabled={!product.inStock && !product.isPreorder}
+          style={{ opacity: (!product.inStock && !product.isPreorder) ? 0.5 : 1, cursor: (!product.inStock && !product.isPreorder) ? 'not-allowed' : 'pointer' }}
           aria-label={lang === 'ro' ? 'Adaugă în coș' : 'Add to cart'}
         >
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
@@ -96,7 +102,9 @@ export default function ProductCard({ product, lang }: ProductCardProps) {
           </svg>
           {added ? (
             lang === 'ro' ? 'Adăugat' : 'Added'
-          ) : !product.inStock ? (
+          ) : (!product.inStock && !product.isPreorder) ? (
+            lang === 'ro' ? 'Indisponibil' : 'Unavailable'
+          ) : !product.inStock && product.isPreorder ? (
             lang === 'ro' ? 'Precomandă' : 'Pre-order'
           ) : (
             lang === 'ro' ? 'Adaugă' : 'Add'

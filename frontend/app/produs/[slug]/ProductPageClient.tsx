@@ -23,6 +23,8 @@ const t = {
     featured: 'Recomandat',
     selectDimension: 'Selectează dimensiunea',
     dimension: 'Dimensiune',
+    selectColor: 'Selectează nuanța',
+    color: 'Nuanță',
   },
   en: {
     breadcrumbHome: 'Home', breadcrumbCatalog: 'Catalog',
@@ -36,6 +38,8 @@ const t = {
     featured: 'Featured',
     selectDimension: 'Select dimension',
     dimension: 'Dimension',
+    selectColor: 'Select shade',
+    color: 'Shade',
   },
 };
 
@@ -51,6 +55,7 @@ export default function ProductPageClient({ slug }: { slug: string }) {
   const [added, setAdded] = useState(false);
   const [showImage, setShowImage] = useState(false);
   const [selectedVariant, setSelectedVariant] = useState<ProductVariant | null>(null);
+  const [selectedColor, setSelectedColor] = useState<string | null>(null);
   const [activeImage, setActiveImage] = useState<string>('');
 
   const txt = t[lang];
@@ -101,10 +106,12 @@ export default function ProductPageClient({ slug }: { slug: string }) {
   // Prețul afișat: varianta selectată sau prețul de bază
   const displayPrice = selectedVariant ? selectedVariant.price : product?.price ?? 0;
   const hasVariants = product?.variants && product.variants.length > 0;
+  const hasColors = product?.colors && product.colors.length > 0;
 
   function handleAddCart() {
     if (!product) return;
-    addItem(product, lang, selectedVariant);
+    if (hasColors && !selectedColor) return;
+    addItem(product, lang, selectedVariant, selectedColor);
     setAdded(true);
     setTimeout(() => setAdded(false), 2000);
   }
@@ -187,9 +194,13 @@ export default function ProductPageClient({ slug }: { slug: string }) {
                   )}
                   {product.inStock ? (
                     <span className="product-detail-badge badge-stock" style={{ top: product.featured ? 48 : 12 }}>{txt.inStock}</span>
-                  ) : (
+                  ) : product.isPreorder ? (
                     <span className="product-detail-badge" style={{ top: product.featured ? 48 : 12, background: '#FFF7ED', color: '#EA580C', border: '1px solid #FED7AA' }}>
                       {lang === 'ro' ? 'Precomandă' : 'Pre-order'}
+                    </span>
+                  ) : (
+                    <span className="product-detail-badge badge-unavailable" style={{ top: product.featured ? 48 : 12, background: '#FEF2F2', color: '#DC2626', border: '1px solid #FECACA' }}>
+                      {lang === 'ro' ? '✗ Indisponibil' : '✗ Out of stock'}
                     </span>
                   )}
                 </div>
@@ -266,31 +277,63 @@ export default function ProductPageClient({ slug }: { slug: string }) {
                     </p>
                     <div className="product-variants-grid">
                       {product.variants!.map((v) => {
-                        const isOutOfStock = v.inStock === false;
+                        const isUnavailable = v.inStock === false && v.isPreorder === false;
+                        const isPreorder = v.inStock === false && v.isPreorder === true;
                         return (
                           <button
                             key={v.label}
                             type="button"
                             className={`product-variant-btn ${selectedVariant?.label === v.label ? 'selected' : ''}`}
-                            onClick={() => !isOutOfStock && setSelectedVariant(v)}
-                            disabled={isOutOfStock}
-                            style={isOutOfStock ? {
+                            onClick={() => !isUnavailable && setSelectedVariant(v)}
+                            disabled={isUnavailable}
+                            style={isUnavailable ? {
                               opacity: 0.4,
                               cursor: 'not-allowed',
                             } : undefined}
                           >
-                            <span className="variant-label" style={isOutOfStock ? { textDecoration: 'line-through' } : undefined}>{v.label}</span>
-                            <span className="variant-price" style={isOutOfStock ? { textDecoration: 'line-through' } : undefined}>
+                            <span className="variant-label" style={isUnavailable ? { textDecoration: 'line-through' } : undefined}>{v.label}</span>
+                            <span className="variant-price" style={isUnavailable ? { textDecoration: 'line-through' } : undefined}>
                               {formatCurrency(v.price, product.currency, lang === 'ro' ? 'ro-RO' : 'en-US')}
                             </span>
-                            {isOutOfStock && (
+                            {isUnavailable ? (
                               <span style={{ fontSize: 9, display: 'block', marginTop: 2, color: 'var(--danger)' }}>
                                 {lang === 'ro' ? 'indisponibil' : 'unavailable'}
                               </span>
-                            )}
+                            ) : isPreorder ? (
+                              <span style={{ fontSize: 9, display: 'block', marginTop: 2, color: '#EA580C' }}>
+                                {lang === 'ro' ? 'precomandă' : 'pre-order'}
+                              </span>
+                            ) : null}
                           </button>
                         );
                       })}
+                    </div>
+                  </div>
+                )}
+
+                {/* Selector culori */}
+                {hasColors && (
+                  <div className="product-variants-section" style={{ marginTop: 24 }}>
+                    <p className="product-variants-label">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ marginRight: 6, verticalAlign: 'middle' }}>
+                        <circle cx="12" cy="12" r="10"/>
+                        <circle cx="12" cy="12" r="6"/>
+                        <circle cx="12" cy="12" r="2"/>
+                      </svg>
+                      {txt.selectColor}:
+                    </p>
+                    <div className="product-variants-grid" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(80px, 1fr))' }}>
+                      {product.colors!.map((c) => (
+                        <button
+                          key={c}
+                          type="button"
+                          className={`product-variant-btn ${selectedColor === c ? 'selected' : ''}`}
+                          onClick={() => setSelectedColor(c)}
+                          style={{ padding: '8px 12px' }}
+                        >
+                          <span className="variant-label">{c}</span>
+                        </button>
+                      ))}
                     </div>
                   </div>
                 )}
@@ -311,6 +354,12 @@ export default function ProductPageClient({ slug }: { slug: string }) {
                       <span style={{ fontWeight: 600, color: 'var(--primary)' }}>{selectedVariant.label}</span>
                     </div>
                   )}
+                  {hasColors && selectedColor && (
+                    <div className="product-meta-row">
+                      <span>{txt.color}</span>
+                      <span style={{ fontWeight: 600, color: 'var(--primary)' }}>{selectedColor}</span>
+                    </div>
+                  )}
                   <div className="product-meta-row">
                     <span>{txt.price}</span>
                     <span className="product-meta-price" style={{ transition: 'color 0.2s' }}>
@@ -324,6 +373,8 @@ export default function ProductPageClient({ slug }: { slug: string }) {
                   <button
                     className={`product-cta-primary ${added ? 'added' : ''}`}
                     onClick={handleAddCart}
+                    disabled={(selectedVariant ? (selectedVariant.inStock === false && selectedVariant.isPreorder === false) : (!product.inStock && !product.isPreorder)) || (hasColors && !selectedColor)}
+                    style={{ opacity: ((selectedVariant ? (selectedVariant.inStock === false && selectedVariant.isPreorder === false) : (!product.inStock && !product.isPreorder)) || (hasColors && !selectedColor)) ? 0.5 : 1, cursor: ((selectedVariant ? (selectedVariant.inStock === false && selectedVariant.isPreorder === false) : (!product.inStock && !product.isPreorder)) || (hasColors && !selectedColor)) ? 'not-allowed' : 'pointer' }}
                   >
                     {added ? (
                       <>
@@ -332,7 +383,15 @@ export default function ProductPageClient({ slug }: { slug: string }) {
                         </svg>
                         {lang === 'ro' ? 'Adăugat!' : 'Added!'}
                       </>
-                    ) : (selectedVariant ? selectedVariant.inStock === false : !product.inStock) ? (
+                    ) : (selectedVariant ? (selectedVariant.inStock === false && selectedVariant.isPreorder === false) : (!product.inStock && !product.isPreorder)) ? (
+                      <>
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/>
+                          <path d="M1 1h4l2.68 13.39a2 2 0 002 1.61h9.72a2 2 0 001.98-1.67l1.38-9.39H6"/>
+                        </svg>
+                        {lang === 'ro' ? 'Indisponibil' : 'Unavailable'}
+                      </>
+                    ) : (selectedVariant ? (selectedVariant.inStock === false && selectedVariant.isPreorder === true) : (!product.inStock && product.isPreorder)) ? (
                       <>
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                           <circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/>

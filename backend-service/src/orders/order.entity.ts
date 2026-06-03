@@ -7,6 +7,7 @@ export interface OrderItem {
   price: number;
   currency: string;
   quantity: number;
+  color?: string;
 }
 
 @Entity('orders')

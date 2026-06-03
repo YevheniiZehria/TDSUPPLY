@@ -208,9 +208,11 @@ export class ProductsService implements OnModuleInit {
       image: dto.image ?? '',
       video: dto.video ?? '',
       inStock: dto.inStock ?? true,
+      isPreorder: dto.isPreorder ?? false,
       featured: dto.featured ?? false,
       tags: dto.tags ?? [],
       variants: dto.variants ?? null,
+      colors: dto.colors ?? [],
       images: dto.images ?? [],
     });
     return this.productRepo.save(product);
@@ -232,6 +234,9 @@ export class ProductsService implements OnModuleInit {
     // Actualizăm explicit variants (inclusiv null pentru ștergere variante)
     if ('variants' in dto) {
       existing.variants = dto.variants ?? null;
+    }
+    if ('colors' in dto) {
+      existing.colors = dto.colors ?? [];
     }
 
     return this.productRepo.save(existing);

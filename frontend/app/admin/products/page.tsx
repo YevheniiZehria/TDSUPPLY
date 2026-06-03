@@ -107,11 +107,13 @@ export default function AdminProductsPage() {
     }
   }
 
-  async function handleToggleInStock(product: Product) {
+  async function handleStatusChange(product: Product, status: 'IN_STOCK' | 'PREORDER' | 'UNAVAILABLE') {
     setToggling(product.id);
     try {
-      const updated = await adminUpdateProduct(product.id, { inStock: !product.inStock });
-      setProducts(prev => prev.map(p => p.id === product.id ? { ...p, inStock: updated.inStock } : p));
+      const inStock = status === 'IN_STOCK';
+      const isPreorder = status === 'PREORDER';
+      const updated = await adminUpdateProduct(product.id, { inStock, isPreorder });
+      setProducts(prev => prev.map(p => p.id === product.id ? { ...p, inStock: updated.inStock, isPreorder: updated.isPreorder } : p));
       setToast(`Stare actualizată pentru "${product.name.ro}".`);
       setTimeout(() => setToast(''), 3000);
     } catch (e) {
@@ -209,9 +211,18 @@ export default function AdminProductsPage() {
                     <td><span className="admin-badge">{p.category}</span></td>
                     <td><strong>{formatCurrency(p.price, p.currency)}</strong><small> /{p.unit}</small></td>
                     <td>
-                      <span className={`admin-badge ${p.inStock ? 'badge-ok' : 'badge-err'}`}>
-                        {p.inStock ? '✓ Stoc' : '✗ Epuizat'}
-                      </span>
+                      <select
+                        className={`admin-badge ${p.inStock ? 'badge-ok' : p.isPreorder ? 'badge-warn' : 'badge-err'}`}
+                        style={{ padding: '2px 6px', fontSize: 12, borderRadius: 12, border: '1px solid var(--border)', background: 'var(--surface-1)', cursor: 'pointer', outline: 'none' }}
+                        value={p.inStock ? 'IN_STOCK' : p.isPreorder ? 'PREORDER' : 'UNAVAILABLE'}
+                        onChange={(e) => handleStatusChange(p, e.target.value as any)}
+                        disabled={toggling === p.id}
+                      >
+                        <option value="IN_STOCK">✓ Stoc</option>
+                        <option value="PREORDER">⏳ Precomandă</option>
+                        <option value="UNAVAILABLE">✗ Indisponibil</option>
+                      </select>
+                      {toggling === p.id && <div className="login-spinner" style={{ width: 12, height: 12, marginLeft: 4, display: 'inline-block', verticalAlign: 'middle' }} />}
                     </td>
                     <td>
                       {p.featured
@@ -232,24 +243,7 @@ export default function AdminProductsPage() {
                             <circle cx="12" cy="12" r="3"/>
                           </svg>
                         </Link>
-                        <button
-                          className="admin-action-icon-btn"
-                          title={p.inStock ? "Setează indisponibil (epuizat)" : "Setează disponibil (în stoc)"}
-                          onClick={() => handleToggleInStock(p)}
-                          disabled={toggling === p.id}
-                        >
-                          {toggling === p.id ? (
-                            <div className="login-spinner" style={{ width: 15, height: 15, borderWidth: 2 }} />
-                          ) : p.inStock ? (
-                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                              <circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/>
-                            </svg>
-                          ) : (
-                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                              <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>
-                            </svg>
-                          )}
-                        </button>
+
                         <Link
                           href={`/admin/products/${p.id}/edit`}
                           className="admin-action-icon-btn edit"

@@ -31,6 +31,11 @@ class ProductVariantDto {
   @IsOptional()
   @IsBoolean()
   inStock?: boolean;
+
+  @ApiPropertyOptional({ description: 'Specifică dacă varianta este la precomandă (când nu e în stoc)', default: false })
+  @IsOptional()
+  @IsBoolean()
+  isPreorder?: boolean;
 }
 
 export class CreateProductDto {
@@ -84,6 +89,11 @@ export class CreateProductDto {
   @ApiPropertyOptional({ default: false })
   @IsOptional()
   @IsBoolean()
+  isPreorder?: boolean;
+
+  @ApiPropertyOptional({ default: false })
+  @IsOptional()
+  @IsBoolean()
   featured?: boolean;
 
   @ApiPropertyOptional({ type: [String] })
@@ -97,6 +107,12 @@ export class CreateProductDto {
   @IsArray()
   @IsString({ each: true })
   images?: string[];
+
+  @ApiPropertyOptional({ type: [String], description: 'Nuanțe disponibile (opțional)' })
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  colors?: string[];
 
   @ApiPropertyOptional({
     description: 'Variante dimensiune/preț (opțional). Dacă există, prețul principal devine fallback.',

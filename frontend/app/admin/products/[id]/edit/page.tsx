@@ -6,7 +6,7 @@ import AdminLayout from '@/components/AdminLayout';
 import { adminGetProductById, adminUpdateProduct, adminDeleteProduct, adminUploadImage, adminUploadVideo } from '@/lib/adminApi';
 import { getProductImageUrl, getProductVideoUrl, type Product } from '@/lib/api';
 
-interface Variant { label: string; price: string; inStock: boolean; }
+interface Variant { label: string; price: string; inStock: boolean; isPreorder: boolean; }
 
 const CATEGORIES = [
   { id: 'zirconia', label: 'Discuri Zirconia' },
@@ -42,15 +42,15 @@ export default function EditProductPage() {
     category: 'zirconia',
     descRo: '', descEn: '',
     price: '', currency: 'USD', unit: 'buc',
-    image: '', video: '', inStock: true, featured: false,
-    tags: '',
+    image: '', video: '', inStock: true, isPreorder: false, featured: false,
+    tags: '', colors: '',
   });
   const [variants, setVariants] = useState<Variant[]>([]);
   const [images, setImages] = useState<string[]>([]);
   const [galleryUploading, setGalleryUploading] = useState(false);
 
   function addVariant() {
-    setVariants(prev => [...prev, { label: '', price: '', inStock: true }]);
+    setVariants(prev => [...prev, { label: '', price: '', inStock: true, isPreorder: false }]);
   }
   function removeVariant(idx: number) {
     setVariants(prev => prev.filter((_, i) => i !== idx));
@@ -70,12 +70,13 @@ export default function EditProductPage() {
           category: p.category,
           descRo: p.description.ro, descEn: p.description.en,
           price: String(p.price), currency: p.currency, unit: p.unit,
-          image: p.image, video: p.video ?? '', inStock: p.inStock, featured: p.featured ?? false,
+          image: p.image, video: p.video ?? '', inStock: p.inStock, isPreorder: p.isPreorder ?? false, featured: p.featured ?? false,
           tags: p.tags.join(', '),
+          colors: p.colors?.join(', ') || '',
         });
         // Încarcă variantele existente
         if (p.variants && p.variants.length > 0) {
-          setVariants(p.variants.map(v => ({ label: v.label, price: String(v.price), inStock: v.inStock !== false })));
+          setVariants(p.variants.map(v => ({ label: v.label, price: String(v.price), inStock: v.inStock !== false, isPreorder: v.isPreorder === true })));
         }
         setImages(p.images ?? []);
       })
@@ -245,7 +246,7 @@ export default function EditProductPage() {
     try {
       const parsedVariants = variants
         .filter(v => v.label.trim() && v.price)
-        .map(v => ({ label: v.label.trim(), price: parseFloat(v.price), inStock: v.inStock !== false }))
+        .map(v => ({ label: v.label.trim(), price: parseFloat(v.price), inStock: v.inStock !== false, isPreorder: v.isPreorder === true }))
         .sort((a, b) => {
           const numRegex = /[-+]?[0-9]*\.?[0-9]+/;
           const aMatch = a.label.match(numRegex);
@@ -275,8 +276,10 @@ export default function EditProductPage() {
         image: form.image,
         video: form.video,
         inStock: form.inStock,
+        isPreorder: form.isPreorder,
         featured: form.featured,
         tags: form.tags.split(',').map(t => t.trim()).filter(Boolean),
+        colors: form.colors.split(',').map(c => c.trim()).filter(Boolean),
         variants: parsedVariants.length > 0 ? parsedVariants : null,
         images: images,
       } as any);
@@ -378,10 +381,22 @@ export default function EditProductPage() {
               </div>
             </div>
             <div className="admin-form-row">
-              <label className="admin-checkbox-label">
-                <input type="checkbox" checked={form.inStock} onChange={e => set('inStock', e.target.checked)} />
-                <span>În stoc</span>
-              </label>
+              <div className="admin-field">
+                <label className="admin-label">Status Disponibilitate</label>
+                <select 
+                  className="admin-input" 
+                  value={form.inStock ? 'IN_STOCK' : form.isPreorder ? 'PREORDER' : 'UNAVAILABLE'} 
+                  onChange={e => {
+                    if (e.target.value === 'IN_STOCK') { set('inStock', true); set('isPreorder', false); }
+                    else if (e.target.value === 'PREORDER') { set('inStock', false); set('isPreorder', true); }
+                    else { set('inStock', false); set('isPreorder', false); }
+                  }}
+                >
+                  <option value="IN_STOCK">În stoc</option>
+                  <option value="PREORDER">Precomandă</option>
+                  <option value="UNAVAILABLE">Indisponibil</option>
+                </select>
+              </div>
               <label className="admin-checkbox-label">
                 <input type="checkbox" checked={form.featured} onChange={e => set('featured', e.target.checked)} />
                 <span>Produs recomandat (featured)</span>
@@ -402,7 +417,7 @@ export default function EditProductPage() {
                   <tr style={{ borderBottom: '1px solid var(--border)' }}>
                     <th style={{ textAlign: 'left', fontSize: 12, fontWeight: 700, color: 'var(--text-muted)', padding: '6px 8px', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Dimensiune</th>
                     <th style={{ textAlign: 'left', fontSize: 12, fontWeight: 700, color: 'var(--text-muted)', padding: '6px 8px', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Preț (USD)</th>
-                    <th style={{ textAlign: 'center', fontSize: 12, fontWeight: 700, color: 'var(--text-muted)', padding: '6px 8px', textTransform: 'uppercase', letterSpacing: '0.06em', width: 80 }}>În Stoc</th>
+                    <th style={{ textAlign: 'center', fontSize: 12, fontWeight: 700, color: 'var(--text-muted)', padding: '6px 8px', textTransform: 'uppercase', letterSpacing: '0.06em', width: 110 }}>Status</th>
                     <th style={{ width: 40 }} />
                   </tr>
                 </thead>
@@ -429,12 +444,20 @@ export default function EditProductPage() {
                         />
                       </td>
                       <td style={{ padding: '6px 8px', textAlign: 'center' }}>
-                        <input
-                          type="checkbox"
-                          checked={v.inStock !== false}
-                          onChange={e => updateVariant(idx, 'inStock', e.target.checked)}
-                          style={{ width: 18, height: 18, cursor: 'pointer', verticalAlign: 'middle' }}
-                        />
+                        <select
+                          className="admin-input"
+                          style={{ padding: '6px 8px', fontSize: 13 }}
+                          value={v.inStock !== false ? 'IN_STOCK' : v.isPreorder ? 'PREORDER' : 'UNAVAILABLE'}
+                          onChange={e => {
+                            if (e.target.value === 'IN_STOCK') { updateVariant(idx, 'inStock', true); updateVariant(idx, 'isPreorder', false); }
+                            else if (e.target.value === 'PREORDER') { updateVariant(idx, 'inStock', false); updateVariant(idx, 'isPreorder', true); }
+                            else { updateVariant(idx, 'inStock', false); updateVariant(idx, 'isPreorder', false); }
+                          }}
+                        >
+                          <option value="IN_STOCK">Stoc</option>
+                          <option value="PREORDER">Precom.</option>
+                          <option value="UNAVAILABLE">Indisp.</option>
+                        </select>
                       </td>
                       <td style={{ padding: '6px 8px', textAlign: 'center' }}>
                         <button
@@ -466,6 +489,10 @@ export default function EditProductPage() {
             <div className="admin-field">
               <label className="admin-label">Tags (separate prin virgulă)</label>
               <input className="admin-input" value={form.tags} onChange={e => set('tags', e.target.value)} />
+            </div>
+            <div className="admin-field" style={{ marginTop: 8 }}>
+              <label className="admin-label">Nuanțe disponibile (separate prin virgulă)</label>
+              <input className="admin-input" placeholder="A1, A2, A3, Bleach" value={form.colors} onChange={e => set('colors', e.target.value)} />
             </div>
             
             <div className="admin-field" style={{ marginTop: 8 }}>
