@@ -49,6 +49,10 @@ const nextConfig: NextConfig = {
         destination: 'http://localhost:3001/products/:path*',
       },
       {
+        source: '/categories/:path*',
+        destination: 'http://localhost:3001/categories/:path*',
+      },
+      {
         source: '/uploads/:path*',
         destination: 'http://localhost:3001/uploads/:path*',
       },
