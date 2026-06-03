@@ -4,7 +4,7 @@ import { useEffect, useState, useMemo } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import AdminLayout from '@/components/AdminLayout';
-import { adminGetProducts, adminDeleteProduct, adminImportProducts } from '@/lib/adminApi';
+import { adminGetProducts, adminDeleteProduct, adminImportProducts, adminUpdateProduct } from '@/lib/adminApi';
 import { formatCurrency, type Product } from '@/lib/api';
 
 const CATEGORIES_FILTER = [
@@ -33,6 +33,7 @@ export default function AdminProductsPage() {
   const [deleteTarget, setDeleteTarget] = useState<Product | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [toast, setToast] = useState('');
+  const [toggling, setToggling] = useState<string | null>(null);
 
   // XLSX Import States
   const [importing, setImporting] = useState(false);
@@ -103,6 +104,21 @@ export default function AdminProductsPage() {
     } finally {
       setDeleting(false);
       setDeleteTarget(null);
+    }
+  }
+
+  async function handleToggleInStock(product: Product) {
+    setToggling(product.id);
+    try {
+      const updated = await adminUpdateProduct(product.id, { inStock: !product.inStock });
+      setProducts(prev => prev.map(p => p.id === product.id ? { ...p, inStock: updated.inStock } : p));
+      setToast(`Stare actualizată pentru "${product.name.ro}".`);
+      setTimeout(() => setToast(''), 3000);
+    } catch (e) {
+      setToast('Eroare la actualizarea stării.');
+      setTimeout(() => setToast(''), 3000);
+    } finally {
+      setToggling(null);
     }
   }
 
@@ -216,6 +232,24 @@ export default function AdminProductsPage() {
                             <circle cx="12" cy="12" r="3"/>
                           </svg>
                         </Link>
+                        <button
+                          className="admin-action-icon-btn"
+                          title={p.inStock ? "Setează indisponibil (epuizat)" : "Setează disponibil (în stoc)"}
+                          onClick={() => handleToggleInStock(p)}
+                          disabled={toggling === p.id}
+                        >
+                          {toggling === p.id ? (
+                            <div className="login-spinner" style={{ width: 15, height: 15, borderWidth: 2 }} />
+                          ) : p.inStock ? (
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                              <circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/>
+                            </svg>
+                          ) : (
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                              <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>
+                            </svg>
+                          )}
+                        </button>
                         <Link
                           href={`/admin/products/${p.id}/edit`}
                           className="admin-action-icon-btn edit"

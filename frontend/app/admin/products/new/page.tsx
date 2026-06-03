@@ -108,6 +108,22 @@ export default function NewProductPage() {
     }
   }
 
+  function handleGalleryPaste(e: React.ClipboardEvent) {
+    const items = e.clipboardData?.items;
+    if (!items) return;
+    const files: File[] = [];
+    for (let i = 0; i < items.length; i++) {
+      if (items[i].type.indexOf('image') !== -1) {
+        const file = items[i].getAsFile();
+        if (file) files.push(file);
+      }
+    }
+    if (files.length > 0) {
+      e.preventDefault();
+      handleGalleryUpload(files);
+    }
+  }
+
   async function handleVideoUpload(file: File) {
     setVideoUploading(true);
     setError('');
@@ -148,7 +164,7 @@ export default function NewProductPage() {
     }
   }
 
-  async function handleGalleryUpload(files: FileList | null) {
+  async function handleGalleryUpload(files: FileList | null | File[]) {
     if (!files || files.length === 0) return;
     setGalleryUploading(true);
     setError('');
@@ -449,7 +465,10 @@ export default function NewProductPage() {
               
               <div
                 className={`admin-upload-zone ${galleryUploading ? 'uploading' : ''}`}
+                onPaste={handleGalleryPaste}
+                tabIndex={0}
                 style={{
+                  outline: 'none',
                   border: '2px dashed var(--border)',
                   borderRadius: 8,
                   padding: '20px 16px',
@@ -473,7 +492,7 @@ export default function NewProductPage() {
                   <>
                     <span style={{ fontSize: 24 }}>📤</span>
                     <span className="admin-upload-zone-text" style={{ fontSize: 13, fontWeight: 500 }}>
-                      Alegeți sau glisați imagini suplimentare pentru galerie
+                      Alegeți, glisați sau dați <strong>Paste (Ctrl+V)</strong> imagini suplimentare pentru galerie
                     </span>
                     <span className="admin-upload-zone-hint" style={{ fontSize: 11, color: 'var(--text-muted)' }}>
                       Puteți selecta mai multe fișiere deodată (PNG, JPG, WEBP)
