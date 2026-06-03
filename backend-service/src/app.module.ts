@@ -12,6 +12,7 @@ import { UserAuthModule } from './user-auth/user-auth.module';
 import { OrdersModule } from './orders/orders.module';
 import { SettingsModule } from './settings/settings.module';
 import { MailModule } from './mail/mail.module';
+import { CategoriesModule } from './categories/categories.module';
 
 @Module({
   imports: [
@@ -50,6 +51,7 @@ import { MailModule } from './mail/mail.module';
     UserAuthModule,
     OrdersModule,
     SettingsModule,
+    CategoriesModule,
   ],
   controllers: [AppController],
   providers: [AppService],

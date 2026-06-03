@@ -4,18 +4,9 @@ import { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import AdminLayout from '@/components/AdminLayout';
 import { adminGetProductById, adminUpdateProduct, adminDeleteProduct, adminUploadImage, adminUploadVideo } from '@/lib/adminApi';
-import { getProductImageUrl, getProductVideoUrl, type Product } from '@/lib/api';
+import { getProductImageUrl, getProductVideoUrl, type Product, fetchCategories, type Category } from '@/lib/api';
 
 interface Variant { label: string; price: string; inStock: boolean; isPreorder: boolean; }
-
-const CATEGORIES = [
-  { id: 'zirconia', label: 'Discuri Zirconia' },
-  { id: 'glass-ceramic', label: 'Glass Ceramică' },
-  { id: 'milling-machines', label: 'Mașini de Frezat & Cuptoare' },
-  { id: 'scanners-printers', label: 'Scannere & Imprimante' },
-  { id: 'peek-pmma-wax', label: 'PEEK, PMMA & Wax' },
-  { id: 'composite-materials', label: 'Materiale Compozite' },
-];
 
 export default function EditProductPage() {
   const router = useRouter();
@@ -48,6 +39,7 @@ export default function EditProductPage() {
   const [variants, setVariants] = useState<Variant[]>([]);
   const [images, setImages] = useState<string[]>([]);
   const [galleryUploading, setGalleryUploading] = useState(false);
+  const [categories, setCategories] = useState<Category[]>([]);
 
   function addVariant() {
     setVariants(prev => [...prev, { label: '', price: '', inStock: true, isPreorder: false }]);
@@ -60,6 +52,7 @@ export default function EditProductPage() {
   }
 
   useEffect(() => {
+    fetchCategories().then(setCategories).catch(console.error);
     if (!id) return;
     setLoading(true);
     adminGetProductById(id)
@@ -330,7 +323,7 @@ export default function EditProductPage() {
               <div className="admin-field">
                 <label className="admin-label">Categorie *</label>
                 <select className="admin-input" value={form.category} onChange={e => set('category', e.target.value)}>
-                  {CATEGORIES.map(c => <option key={c.id} value={c.id}>{c.label}</option>)}
+                  {categories.map(c => <option key={c.id} value={c.id}>{c.name.ro}</option>)}
                 </select>
               </div>
             </div>

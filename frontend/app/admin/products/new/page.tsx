@@ -1,21 +1,13 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import AdminLayout from '@/components/AdminLayout';
 import { adminCreateProduct, adminUploadImage, adminUploadVideo } from '@/lib/adminApi';
-import { getProductImageUrl, getProductVideoUrl } from '@/lib/api';
+
+import { fetchCategories, Category, getProductImageUrl, getProductVideoUrl } from '@/lib/api';
 
 interface Variant { label: string; price: string; inStock: boolean; isPreorder: boolean; }
-
-const CATEGORIES = [
-  { id: 'zirconia', label: 'Discuri Zirconia' },
-  { id: 'glass-ceramic', label: 'Glass Ceramică' },
-  { id: 'milling-machines', label: 'Mașini de Frezat & Cuptoare' },
-  { id: 'scanners-printers', label: 'Scannere & Imprimante' },
-  { id: 'peek-pmma-wax', label: 'PEEK, PMMA & Wax' },
-  { id: 'composite-materials', label: 'Materiale Compozite' },
-];
 
 export default function NewProductPage() {
   const router = useRouter();
@@ -38,6 +30,11 @@ export default function NewProductPage() {
   const [variants, setVariants] = useState<Variant[]>([]);
   const [images, setImages] = useState<string[]>([]);
   const [galleryUploading, setGalleryUploading] = useState(false);
+  const [categories, setCategories] = useState<Category[]>([]);
+
+  useEffect(() => {
+    fetchCategories().then(setCategories).catch(console.error);
+  }, []);
 
   function addVariant() {
     setVariants(prev => [...prev, { label: '', price: '', inStock: true, isPreorder: false }]);
@@ -272,7 +269,7 @@ export default function NewProductPage() {
               <div className="admin-field">
                 <label className="admin-label">Categorie *</label>
                 <select className="admin-input" value={form.category} onChange={e => set('category', e.target.value)}>
-                  {CATEGORIES.map(c => <option key={c.id} value={c.id}>{c.label}</option>)}
+                  {categories.map(c => <option key={c.id} value={c.id}>{c.name.ro}</option>)}
                 </select>
               </div>
             </div>

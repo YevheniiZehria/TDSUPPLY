@@ -5,8 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
-import { fetchProductBySlug, formatCurrency, getProductImageUrl, getProductVideoUrl, type Product, type ProductVariant } from '@/lib/api';
-import { CATEGORIES } from '@/data/catalog';
+import { fetchProductBySlug, formatCurrency, getProductImageUrl, getProductVideoUrl, fetchCategories, type Product, type ProductVariant, type Category } from '@/lib/api';
 import { useUser } from '@/contexts/UserContext';
 import { useCart } from '@/contexts/CartContext';
 
@@ -57,6 +56,7 @@ export default function ProductPageClient({ slug }: { slug: string }) {
   const [selectedVariant, setSelectedVariant] = useState<ProductVariant | null>(null);
   const [selectedColor, setSelectedColor] = useState<string | null>(null);
   const [activeImage, setActiveImage] = useState<string>('');
+  const [categories, setCategories] = useState<Category[]>([]);
 
   const txt = t[lang];
 
@@ -64,6 +64,7 @@ export default function ProductPageClient({ slug }: { slug: string }) {
     if (!slug) return;
     setLoading(true);
     setError(false);
+    fetchCategories().then(setCategories).catch(() => {});
     fetchProductBySlug(slug)
       .then((p) => {
         // Sortează variantele în ordine crescătoare după dimensiune
@@ -100,7 +101,7 @@ export default function ProductPageClient({ slug }: { slug: string }) {
   }, [slug]);
 
   const category = product
-    ? CATEGORIES.find(c => c.id === product.category)
+    ? categories.find(c => c.id === product.category)
     : null;
 
   // Prețul afișat: varianta selectată sau prețul de bază
@@ -130,7 +131,7 @@ export default function ProductPageClient({ slug }: { slug: string }) {
             {category && (
               <>
                 <span className="breadcrumb-sep">›</span>
-                <Link href={`/catalog?cat=${category.slug}`}>{category.name[lang]}</Link>
+                <Link href={`/catalog?cat=${category.slug}`}>{lang === 'ro' ? category.name.ro : category.name.en}</Link>
               </>
             )}
             {product && (

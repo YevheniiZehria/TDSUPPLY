@@ -6,8 +6,7 @@ import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import ProductCard from '@/components/ProductCard';
 import CategoryIcon from '@/components/CategoryIcon';
-import { CATEGORIES } from '@/data/catalog';
-import { fetchProducts, type Product } from '@/lib/api';
+import { fetchProducts, fetchCategories, type Product, type Category } from '@/lib/api';
 
 const t = {
   ro: {
@@ -44,6 +43,7 @@ function CatalogContent() {
   const [search, setSearch] = useState(searchParams.get('q') ?? '');
   const [allProducts, setAllProducts] = useState<Product[]>([]);
   const [loadingProducts, setLoadingProducts] = useState(true);
+  const [categories, setCategories] = useState<Category[]>([]);
 
   const activeCategory = searchParams.get('cat') ?? 'all';
   const queryQ = searchParams.get('q') ?? '';
@@ -80,8 +80,11 @@ function CatalogContent() {
   useEffect(() => {
     setLoadingProducts(true);
     // Fetch products based on search query only, so category counts remain accurate across all categories
-    fetchProducts({ q: queryQ })
-      .then(setAllProducts)
+    Promise.all([fetchProducts({ q: queryQ }), fetchCategories()])
+      .then(([prods, cats]) => {
+        setAllProducts(prods);
+        setCategories(cats);
+      })
       .catch(console.error)
       .finally(() => setLoadingProducts(false));
   }, [queryQ]);
@@ -102,11 +105,11 @@ function CatalogContent() {
 
   const catCounts = useMemo(() => {
     const counts: Record<string, number> = { all: allProducts.length };
-    CATEGORIES.forEach(cat => {
+    categories.forEach(cat => {
       counts[cat.id] = allProducts.filter(p => p.category === cat.id).length;
     });
     return counts;
-  }, [allProducts]);
+  }, [allProducts, categories]);
 
   return (
     <>
@@ -148,7 +151,7 @@ function CatalogContent() {
                   <span>{txt.allCat}</span>
                   <span className="filter-count">{catCounts.all}</span>
                 </li>
-                {CATEGORIES.map(cat => (
+                {categories.map(cat => (
                   <li
                     key={cat.id}
                     className={`filter-item ${activeCategory === cat.id ? 'active' : ''}`}
@@ -157,7 +160,7 @@ function CatalogContent() {
                   >
                     <span className="filter-item-label">
                       <CategoryIcon categoryId={cat.id} size={14} className="filter-cat-icon" />
-                      {cat.name[lang]}
+                      {lang === 'ro' ? cat.name.ro : cat.name.en}
                     </span>
                     <span className="filter-count">{catCounts[cat.id] ?? 0}</span>
                   </li>

@@ -6,8 +6,7 @@ import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import ProductCard from '@/components/ProductCard';
 import CategoryIcon from '@/components/CategoryIcon';
-import { CATEGORIES } from '@/data/catalog';
-import { fetchProducts, fetchSiteStats, type Product, type SiteStats } from '@/lib/api';
+import { fetchProducts, fetchSiteStats, fetchCategories, type Product, type SiteStats, type Category } from '@/lib/api';
 
 const t = {
   ro: {
@@ -99,11 +98,13 @@ function AnimatedStat({ value, suffix = '' }: { value: number; suffix?: string }
 export default function HomePage() {
   const [lang, setLang] = useState<'ro' | 'en'>('ro');
   const [allProducts, setAllProducts] = useState<Product[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [featured, setFeatured] = useState<Product[]>([]);
   const [siteStats, setSiteStats] = useState<SiteStats | null>(null);
   const txt = t[lang];
 
   useEffect(() => {
+    fetchCategories().then(setCategories).catch(() => {});
     fetchProducts()
       .then((products) => {
         setAllProducts(products);
@@ -246,7 +247,7 @@ export default function HomePage() {
             </div>
 
             <div className="categories-grid">
-              {CATEGORIES.map((cat) => (
+              {categories.map((cat) => (
                 <Link
                   key={cat.id}
                   href={`/catalog?cat=${cat.slug}`}

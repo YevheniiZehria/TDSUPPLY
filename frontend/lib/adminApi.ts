@@ -58,6 +58,22 @@ export function adminDeleteProduct(id: string): Promise<void> {
   return adminFetch<void>(`/products/${id}`, { method: 'DELETE' });
 }
 
+// ─── Gestiune Categorii ────────────────────────────────────────────────────
+
+import type { Category } from './api';
+
+export function adminCreateCategory(data: Partial<Category>): Promise<Category> {
+  return adminFetch<Category>('/categories', { method: 'POST', body: JSON.stringify(data) });
+}
+
+export function adminUpdateCategory(id: string, data: Partial<Category>): Promise<Category> {
+  return adminFetch<Category>(`/categories/${id}`, { method: 'PUT', body: JSON.stringify(data) });
+}
+
+export function adminDeleteCategory(id: string): Promise<void> {
+  return adminFetch<void>(`/categories/${id}`, { method: 'DELETE' });
+}
+
 /** Upload imagine */
 export async function adminUploadImage(file: File): Promise<{ url: string }> {
   const token = getToken();

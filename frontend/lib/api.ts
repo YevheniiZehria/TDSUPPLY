@@ -1,5 +1,12 @@
 const BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
 
+export interface CategoryName { ro: string; en: string; }
+export interface Category {
+  id: string;
+  name: CategoryName;
+  slug: string;
+}
+
 export interface ProductVariant { label: string; price: number; inStock?: boolean; isPreorder?: boolean; }
 export interface ProductName { ro: string; en: string; }
 export interface Product {
@@ -51,6 +58,12 @@ export function getProductVideoUrl(videoPath?: string | null): string {
   if (videoPath.startsWith('http://') || videoPath.startsWith('https://')) return videoPath;
   // Cale relativă (ex: /public/products/file.mp4) — construim URL direct la backend
   return `${BACKEND_DIRECT}${videoPath}`;
+}
+
+export async function fetchCategories(): Promise<Category[]> {
+  const res = await fetch(`${BASE}/categories`, { cache: 'no-store' });
+  if (!res.ok) throw new Error('Failed to fetch categories');
+  return res.json() as Promise<Category[]>;
 }
 
 export async function fetchProducts(params?: { category?: string; featured?: boolean; q?: string }): Promise<Product[]> {

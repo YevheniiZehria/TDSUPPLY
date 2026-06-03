@@ -3,10 +3,23 @@ import PDFDocument from 'pdfkit';
 import { OrderEntity } from './order.entity';
 import { Response } from 'express';
 
+import * as path from 'path';
+
 @Injectable()
 export class PdfService {
   generateOrderPdf(order: OrderEntity, res: Response) {
     const doc = new PDFDocument({ margin: 50, size: 'A4' });
+
+    const fontRegular = path.join(__dirname, '..', '..', 'assets', 'fonts', 'Roboto-Regular.ttf');
+    const fontBold = path.join(__dirname, '..', '..', 'assets', 'fonts', 'Roboto-Bold.ttf');
+    
+    try {
+      doc.registerFont('Roboto', fontRegular);
+      doc.registerFont('Roboto-Bold', fontBold);
+      doc.font('Roboto');
+    } catch (err) {
+      console.warn('Nu s-au putut încărca fonturile Roboto, se va folosi fontul default.', err);
+    }
 
     // Stream output to the response object directly
     doc.pipe(res);

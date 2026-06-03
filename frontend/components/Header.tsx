@@ -5,10 +5,9 @@ import Link from 'next/link';
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import { useUser } from '@/contexts/UserContext';
 import { useCart } from '@/contexts/CartContext';
-import { CATEGORIES } from '@/data/catalog';
 import CartDrawer from './CartDrawer';
 import CategoryIcon from './CategoryIcon';
-import { fetchSiteSettings, type SiteSettings } from '@/lib/api';
+import { fetchSiteSettings, type SiteSettings, fetchCategories, type Category } from '@/lib/api';
 
 interface HeaderProps {
   lang: 'ro' | 'en';
@@ -47,11 +46,13 @@ function HeaderContent({ lang, onLangChange }: HeaderProps) {
   const { count, openDrawer } = useCart();
   const router = useRouter();
   const [settings, setSettings] = useState<SiteSettings | null>(null);
+  const [categories, setCategories] = useState<Category[]>([]);
 
   useEffect(() => {
     fetchSiteSettings()
       .then(setSettings)
       .catch(() => {});
+    fetchCategories().then(setCategories).catch(() => {});
   }, []);
 
   // Sync search input with URL
@@ -229,10 +230,10 @@ function HeaderContent({ lang, onLangChange }: HeaderProps) {
               </svg>
               {txt.catalog}
             </Link>
-            {CATEGORIES.map((cat) => (
+            {categories.map((cat) => (
               <Link key={cat.id} href={`/catalog?cat=${cat.id}`} className="nav-item">
                 <CategoryIcon categoryId={cat.id} size={16} className="nav-icon" />
-                {cat.name[lang]}
+                {lang === 'ro' ? cat.name.ro : cat.name.en}
               </Link>
             ))}
           </div>
