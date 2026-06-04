@@ -5,6 +5,7 @@ import { ThrottlerGuard, Throttle } from '@nestjs/throttler';
 import { ConfigService } from '@nestjs/config';
 import { UserJwtGuard } from './user-jwt.guard';
 import { UserAuthService } from './user-auth.service';
+import * as https from 'https';
 
 class UserLoginDto {
   @ApiProperty() @IsEmail() email: string;
@@ -69,15 +70,38 @@ export class UserAuthController {
     }
 
     try {
-      const response = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: `secret=${encodeURIComponent(secret)}&response=${encodeURIComponent(token)}${remoteip ? `&remoteip=${encodeURIComponent(remoteip)}` : ''}`,
+      const postData = `secret=${encodeURIComponent(secret)}&response=${encodeURIComponent(token)}${remoteip ? `&remoteip=${encodeURIComponent(remoteip)}` : ''}`;
+      
+      return await new Promise<boolean>((resolve) => {
+        const req = https.request('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'Content-Length': Buffer.byteLength(postData),
+          },
+        }, (res) => {
+          let body = '';
+          res.on('data', chunk => body += chunk);
+          res.on('end', () => {
+            try {
+              const data = JSON.parse(body);
+              resolve(!!data.success);
+            } catch {
+              resolve(false);
+            }
+          });
+        });
+
+        req.on('error', (err) => {
+          this.logger.error('Eroare rețea verificare Turnstile:', err);
+          resolve(false);
+        });
+
+        req.write(postData);
+        req.end();
       });
-      const data = await response.json() as any;
-      return !!data.success;
     } catch (error) {
-      this.logger.error('Eroare verificare Turnstile:', error);
+      this.logger.error('Eroare generală verificare Turnstile:', error);
       return false;
     }
   }
