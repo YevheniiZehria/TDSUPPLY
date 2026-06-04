@@ -14,7 +14,8 @@ import type { Product, ProductVariant } from '@/lib/api';
 const STORAGE_KEY = 'cart_items';
 
 export interface CartItem {
-  id: string;
+  id: string; // Composite ID for React keys and deduplication
+  productId: string; // The actual product ID in the database
   slug: string;
   name: string;
   price: number;
@@ -99,6 +100,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
         ...current,
         {
           id: itemId,
+          productId: product.id,
           slug: product.slug,
           name: itemName,
           price: itemPrice,

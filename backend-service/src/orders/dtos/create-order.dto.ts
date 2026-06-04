@@ -28,6 +28,11 @@ class OrderItemDto {
   @IsOptional()
   @IsString()
   color?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  variantLabel?: string;
 }
 
 class DeliveryAddressDto {

@@ -46,7 +46,7 @@ export class OrdersService {
     userId: string;
     userEmail: string;
     userName: string;
-    items: { id: string; quantity: number; color?: string }[];
+    items: { id: string; quantity: number; color?: string; variantLabel?: string }[];
     deliveryAddress: {
       strada: string;
       bloc?: string;
@@ -63,9 +63,8 @@ export class OrdersService {
     const verifiedItems: OrderItem[] = [];
 
     for (const item of orderData.items) {
-      const hasVariant = item.id.includes('-');
-      const productId = hasVariant ? item.id.split('-')[0] : item.id;
-      const variantLabel = hasVariant ? item.id.split('-').slice(1).join('-') : null;
+      const productId = item.id;
+      const variantLabel = item.variantLabel || null;
 
       const product = await this.productsService.findById(productId);
       if (!product) {

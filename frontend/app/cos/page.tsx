@@ -243,11 +243,19 @@ export default function CartPage() {
     setSubmitting(true);
     setError('');
     try {
-      const mappedItems = items.map(item => ({
-        id: item.id,
-        quantity: item.quantity,
-        color: item.color,
-      }));
+      const mappedItems = items.map(item => {
+        // Fallback for legacy items in localStorage that don't have productId
+        const hasVariant = !item.productId && item.id.includes('-');
+        const fallbackId = hasVariant ? item.id.split('-')[0] : item.id;
+        const fallbackVariant = hasVariant ? item.id.split('-').slice(1).join('-') : undefined;
+
+        return {
+          id: item.productId || fallbackId,
+          variantLabel: item.variantLabel || fallbackVariant,
+          quantity: item.quantity,
+          color: item.color,
+        };
+      });
 
       let finalPhone = telefon.trim();
       const cleanPhone = finalPhone.replace(/[\s\-\(\)\+]/g, '');
