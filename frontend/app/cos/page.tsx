@@ -243,8 +243,20 @@ export default function CartPage() {
     setSubmitting(true);
     setError('');
     try {
+      const mappedItems = items.map(item => ({
+        id: item.id,
+        quantity: item.quantity,
+        color: item.color,
+      }));
+
+      let finalPhone = telefon.trim();
+      const cleanPhone = finalPhone.replace(/[\s\-\(\)\+]/g, '');
+      if (/^07\d{8}$/.test(cleanPhone)) {
+        finalPhone = '+4' + cleanPhone;
+      }
+
       await createOrder({
-        items,
+        items: mappedItems,
         deliveryAddress: {
           strada: strada.trim(),
           bloc: bloc.trim() || undefined,
@@ -252,16 +264,16 @@ export default function CartPage() {
           judet,
           codPostal: codPostal.trim(),
           observatii: observatii.trim() || undefined,
-          telefon: telefon.trim(),
+          telefon: finalPhone,
         },
       });
-      updateUser({ phone: telefon.trim() });
+      updateUser({ phone: finalPhone });
       setSuccess(true);
       clearCart();
-    } catch (err) {
-      setError(lang === 'ro'
+    } catch (err: any) {
+      setError(err.message || (lang === 'ro'
         ? 'Eroare la plasarea comenzii. Vă rugăm să reîncercați.'
-        : 'Error placing the order. Please try again.');
+        : 'Error placing the order. Please try again.'));
     } finally {
       setSubmitting(false);
     }
