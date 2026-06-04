@@ -54,8 +54,9 @@ export function UserProvider({ children }: { children: ReactNode }) {
       body: JSON.stringify({ email, password, captchaToken }),
     });
     if (!res.ok) {
-      const body = await res.json().catch(() => ({})) as { message?: string };
-      throw new Error(body.message ?? 'Autentificare eșuată.');
+      const body = await res.json().catch(() => ({})) as { message?: string | string[] };
+      const errMsg = Array.isArray(body.message) ? body.message.join(', ') : body.message;
+      throw new Error(errMsg ?? 'Autentificare eșuată.');
     }
     const data = await res.json() as { accessToken: string; user: UserInfo };
     localStorage.setItem('user_token', data.accessToken);

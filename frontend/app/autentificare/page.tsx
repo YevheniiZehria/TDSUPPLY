@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, Suspense } from 'react';
+import { useState, useEffect, Suspense, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useUser } from '@/contexts/UserContext';
@@ -197,13 +197,14 @@ function LoginContent() {
     }
   }
 
+  const widgetIdRef = useRef<string | null>(null);
+
   // Încarcă și inițializează Cloudflare Turnstile
   useEffect(() => {
-    let widgetId: string | null = null;
     const renderWidget = () => {
       if ((window as any).turnstile) {
         try {
-          widgetId = (window as any).turnstile.render('#turnstile-container', {
+          widgetIdRef.current = (window as any).turnstile.render('#turnstile-container', {
             sitekey: process.env.NEXT_PUBLIC_TURNSTILE_SITEKEY || '1x00000000000000000000AA',
             callback: (token: string) => { setTurnstileToken(token); },
           });
@@ -228,9 +229,9 @@ function LoginContent() {
     }
 
     return () => {
-      if (widgetId !== null && (window as any).turnstile) {
+      if (widgetIdRef.current !== null && (window as any).turnstile) {
         try {
-          (window as any).turnstile.remove(widgetId);
+          (window as any).turnstile.remove(widgetIdRef.current);
         } catch (e) {}
       }
       delete (window as any).onloadTurnstileCallback;
@@ -300,8 +301,8 @@ function LoginContent() {
       }
     } catch (err) {
       setError((err as Error).message || 'Operațiune eșuată.');
-      if ((window as any).turnstile) {
-        try { (window as any).turnstile.reset('#turnstile-container'); } catch (e) {}
+      if ((window as any).turnstile && widgetIdRef.current !== null) {
+        try { (window as any).turnstile.reset(widgetIdRef.current); } catch (e) {}
       }
     } finally {
       setSubmitting(false);
