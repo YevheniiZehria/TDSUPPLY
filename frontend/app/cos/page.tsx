@@ -244,14 +244,21 @@ export default function CartPage() {
     setError('');
     try {
       const mappedItems = items.map(item => {
-        // Fallback for legacy items in localStorage that don't have productId
-        const hasVariant = !item.productId && item.id.includes('-');
-        const fallbackId = hasVariant ? item.id.split('-')[0] : item.id;
-        const fallbackVariant = hasVariant ? item.id.split('-').slice(1).join('-') : undefined;
+        // item.productId: real DB id (for items added after the fix)
+        // item.slug: safe fallback - backend can lookup by slug too
+        // item.id: legacy composite key (productId-variantLabel-color)
+        let resolvedId = item.productId || item.slug || item.id;
+        let resolvedVariant = item.variantLabel;
+
+        // Legacy fallback: if productId is missing and id looks like 'prod-XXX-variant',
+        // we can't safely split, so send slug instead
+        if (!item.productId && !item.slug && item.id.startsWith('prod-')) {
+          resolvedId = item.id; // send as-is, backend will throw descriptive error
+        }
 
         return {
-          id: item.productId || fallbackId,
-          variantLabel: item.variantLabel || fallbackVariant,
+          id: resolvedId,
+          variantLabel: resolvedVariant,
           quantity: item.quantity,
           color: item.color,
         };

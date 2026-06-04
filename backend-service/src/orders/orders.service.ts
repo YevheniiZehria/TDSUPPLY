@@ -66,9 +66,16 @@ export class OrdersService {
       const productId = item.id;
       const variantLabel = item.variantLabel || null;
 
-      const product = await this.productsService.findById(productId);
-      if (!product) {
-        throw new BadRequestException(`Produsul ${productId} nu mai există.`);
+      let product: any;
+      try {
+        product = await this.productsService.findById(productId);
+      } catch {
+        // Fallback: try to find by slug if id lookup fails
+        try {
+          product = await this.productsService.findBySlug(productId);
+        } catch {
+          throw new BadRequestException(`Produsul cu id "${productId}" nu mai există.`);
+        }
       }
 
       let itemPrice = product.price;
