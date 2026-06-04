@@ -1,4 +1,4 @@
-import { Body, Controller, Get, HttpCode, HttpStatus, Post, Req, Query, UseGuards, BadRequestException, Logger } from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, HttpStatus, Post, Req, Query, UseGuards, BadRequestException, Logger, HttpException } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth, ApiOperation, ApiProperty } from '@nestjs/swagger';
 import { IsEmail, IsString, MinLength, IsOptional, IsInt, Min, Max, Matches } from 'class-validator';
 import { ThrottlerGuard, Throttle } from '@nestjs/throttler';
@@ -112,12 +112,18 @@ export class UserAuthController {
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Login utilizator B2B' })
   async login(@Body() dto: UserLoginDto, @Req() req: any) {
-    const ip = req.ip || req.headers['x-forwarded-for'];
-    const isHuman = await this.verifyTurnstile(dto.captchaToken || '', ip);
-    if (!isHuman) {
-      throw new BadRequestException('Validarea anti-robot (captcha) a eșuat. Vă rugăm să reîncercați.');
+    try {
+      const ip = req.ip || req.headers['x-forwarded-for'];
+      const isHuman = await this.verifyTurnstile(dto.captchaToken || '', ip);
+      if (!isHuman) {
+        throw new BadRequestException('Validarea anti-robot (captcha) a eșuat. Vă rugăm să reîncercați.');
+      }
+      return await this.userAuthService.login(dto.email, dto.password);
+    } catch (e: any) {
+      this.logger.error('Login error:', e);
+      if (e.status) throw e; // Already an HttpException
+      throw new HttpException({ message: e.message, stack: e.stack, name: e.name, custom: 'Login debug' }, 500);
     }
-    return this.userAuthService.login(dto.email, dto.password);
   }
 
   @Post('register')
@@ -126,12 +132,18 @@ export class UserAuthController {
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({ summary: 'Înregistrare utilizator B2B' })
   async register(@Body() dto: UserRegisterDto, @Req() req: any) {
-    const ip = req.ip || req.headers['x-forwarded-for'];
-    const isHuman = await this.verifyTurnstile(dto.captchaToken || '', ip);
-    if (!isHuman) {
-      throw new BadRequestException('Validarea anti-robot (captcha) a eșuat. Vă rugăm să reîncercați.');
+    try {
+      const ip = req.ip || req.headers['x-forwarded-for'];
+      const isHuman = await this.verifyTurnstile(dto.captchaToken || '', ip);
+      if (!isHuman) {
+        throw new BadRequestException('Validarea anti-robot (captcha) a eșuat. Vă rugăm să reîncercați.');
+      }
+      return await this.userAuthService.register(dto.email, dto.password, dto.name, dto.phone, dto.birthDate, dto.country);
+    } catch (e: any) {
+      this.logger.error('Register error:', e);
+      if (e.status) throw e;
+      throw new HttpException({ message: e.message, stack: e.stack, name: e.name, custom: 'Register debug' }, 500);
     }
-    return this.userAuthService.register(dto.email, dto.password, dto.name, dto.phone, dto.birthDate, dto.country);
   }
 
   @Get('verify-email')
