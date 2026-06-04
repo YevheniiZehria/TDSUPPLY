@@ -120,7 +120,16 @@ export async function createOrder(data: {
     },
     body: JSON.stringify(payload),
   });
-  if (!res.ok) throw new Error('Failed to create order');
+  if (!res.ok) {
+    if (res.status === 401) {
+      localStorage.removeItem('user_token');
+      window.location.href = '/autentificare?redirect=/cos';
+      throw new Error('Sesiunea a expirat. Vă rugăm să vă autentificați din nou.');
+    }
+    const body = await res.json().catch(() => ({}));
+    const errMsg = Array.isArray(body.message) ? body.message.join(', ') : body.message;
+    throw new Error(errMsg || 'A apărut o eroare la procesarea comenzii.');
+  }
   return res.json();
 }
 
@@ -131,7 +140,14 @@ export async function fetchMyOrders(): Promise<any[]> {
       Authorization: `Bearer ${token}`,
     },
   });
-  if (!res.ok) throw new Error('Failed to fetch orders');
+  if (!res.ok) {
+    if (res.status === 401) {
+      localStorage.removeItem('user_token');
+      window.location.href = '/autentificare';
+      throw new Error('Sesiunea a expirat.');
+    }
+    throw new Error('Failed to fetch orders');
+  }
   return res.json();
 }
 

@@ -199,6 +199,18 @@ function LoginContent() {
 
   // Încarcă și inițializează Cloudflare Turnstile
   useEffect(() => {
+    let widgetId: string | null = null;
+    const renderWidget = () => {
+      if ((window as any).turnstile) {
+        try {
+          widgetId = (window as any).turnstile.render('#turnstile-container', {
+            sitekey: process.env.NEXT_PUBLIC_TURNSTILE_SITEKEY || '1x00000000000000000000AA',
+            callback: (token: string) => { setTurnstileToken(token); },
+          });
+        } catch (e) {}
+      }
+    };
+
     let script = document.getElementById('turnstile-script') as HTMLScriptElement;
     if (!script) {
       script = document.createElement('script');
@@ -209,27 +221,20 @@ function LoginContent() {
       document.body.appendChild(script);
     }
 
-    (window as any).onloadTurnstileCallback = () => {
-      if ((window as any).turnstile) {
-        try {
-          (window as any).turnstile.render('#turnstile-container', {
-            sitekey: process.env.NEXT_PUBLIC_TURNSTILE_SITEKEY || '1x00000000000000000000AA',
-            callback: (token: string) => { setTurnstileToken(token); },
-          });
-        } catch (e) {}
-      }
-    };
-
     if ((window as any).turnstile) {
-      try {
-        (window as any).turnstile.render('#turnstile-container', {
-          sitekey: process.env.NEXT_PUBLIC_TURNSTILE_SITEKEY || '1x00000000000000000000AA',
-          callback: (token: string) => { setTurnstileToken(token); },
-        });
-      } catch (e) {}
+      renderWidget();
+    } else {
+      (window as any).onloadTurnstileCallback = renderWidget;
     }
 
-    return () => { delete (window as any).onloadTurnstileCallback; };
+    return () => {
+      if (widgetId !== null && (window as any).turnstile) {
+        try {
+          (window as any).turnstile.remove(widgetId);
+        } catch (e) {}
+      }
+      delete (window as any).onloadTurnstileCallback;
+    };
   }, [isRegister]);
 
   // Dacă deja logat, redirect direct
