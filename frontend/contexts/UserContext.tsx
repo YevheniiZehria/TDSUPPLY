@@ -2,7 +2,8 @@
 
 import { createContext, useContext, useEffect, useState, useCallback, type ReactNode } from 'react';
 
-const BASE = process.env.NEXT_PUBLIC_API_URL || '/api';
+const apiEnv = process.env.NEXT_PUBLIC_API_URL || '';
+const BASE = apiEnv.endsWith('/api') ? apiEnv : (apiEnv ? `${apiEnv}/api` : '/api');
 
 export interface UserInfo {
   sub: string;

@@ -1,6 +1,7 @@
 import type { Product, ProductStats, SiteSettings } from './api';
 
-const BASE = process.env.NEXT_PUBLIC_API_URL || '/api';
+const apiEnv = process.env.NEXT_PUBLIC_API_URL || '';
+const BASE = apiEnv.endsWith('/api') ? apiEnv : (apiEnv ? `${apiEnv}/api` : '/api');
 
 function getToken(): string {
   if (typeof window === 'undefined') return '';
