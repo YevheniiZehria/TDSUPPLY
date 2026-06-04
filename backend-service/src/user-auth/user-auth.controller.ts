@@ -113,11 +113,12 @@ export class UserAuthController {
   @ApiOperation({ summary: 'Login utilizator B2B' })
   async login(@Body() dto: UserLoginDto, @Req() req: any) {
     try {
-      const ip = req.ip || req.headers['x-forwarded-for'];
-      const isHuman = await this.verifyTurnstile(dto.captchaToken || '', ip);
-      if (!isHuman) {
-        throw new BadRequestException('Validarea anti-robot (captcha) a eșuat. Vă rugăm să reîncercați.');
-      }
+      // TEMPORAR OPRIT PENTRU DEBUG:
+      // const ip = req.ip || req.headers['x-forwarded-for'];
+      // const isHuman = await this.verifyTurnstile(dto.captchaToken || '', ip);
+      // if (!isHuman) {
+      //   throw new BadRequestException('Validarea anti-robot (captcha) a eșuat. Vă rugăm să reîncercați.');
+      // }
       return await this.userAuthService.login(dto.email, dto.password);
     } catch (e: any) {
       this.logger.error('Login error:', e);
@@ -133,11 +134,12 @@ export class UserAuthController {
   @ApiOperation({ summary: 'Înregistrare utilizator B2B' })
   async register(@Body() dto: UserRegisterDto, @Req() req: any) {
     try {
-      const ip = req.ip || req.headers['x-forwarded-for'];
-      const isHuman = await this.verifyTurnstile(dto.captchaToken || '', ip);
-      if (!isHuman) {
-        throw new BadRequestException('Validarea anti-robot (captcha) a eșuat. Vă rugăm să reîncercați.');
-      }
+      // TEMPORAR OPRIT PENTRU DEBUG:
+      // const ip = req.ip || req.headers['x-forwarded-for'];
+      // const isHuman = await this.verifyTurnstile(dto.captchaToken || '', ip);
+      // if (!isHuman) {
+      //   throw new BadRequestException('Validarea anti-robot (captcha) a eșuat. Vă rugăm să reîncercați.');
+      // }
       return await this.userAuthService.register(dto.email, dto.password, dto.name, dto.phone, dto.birthDate, dto.country);
     } catch (e: any) {
       this.logger.error('Register error:', e);

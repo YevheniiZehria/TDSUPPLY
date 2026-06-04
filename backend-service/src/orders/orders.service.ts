@@ -112,7 +112,7 @@ export class OrdersService {
         itemName += ` - Culoare: ${item.color}`;
       }
 
-      if (!currency || currency === 'RON') currency = product.currency; // Prima monedă non-default câștigă
+      currency = product.currency; // Presupunem aceeași monedă pentru toate produsele
       calculatedTotal += itemPrice * item.quantity;
 
       verifiedItems.push({

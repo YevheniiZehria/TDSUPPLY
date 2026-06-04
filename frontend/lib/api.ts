@@ -51,12 +51,7 @@ export function getProductImageUrl(imagePath?: string | null): string {
 
 // Video-urile au nevoie de HTTP Range Requests pentru streaming/seeking.
 // Proxy-ul Next.js (rewrites) nu le suportă corect, deci folosim URL-ul direct al backend-ului.
-const backendBase = process.env.NEXT_PUBLIC_API_URL || '';
-// Videos need direct URL to backend (not via Next.js proxy) for Range request support.
-// If NEXT_PUBLIC_API_URL ends with /api, strip it to get the server root.
-const BACKEND_DIRECT = backendBase.endsWith('/api')
-  ? backendBase.slice(0, -4)
-  : (backendBase || 'http://localhost:3001');
+const BACKEND_DIRECT = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
 export function getProductVideoUrl(videoPath?: string | null): string {
   if (!videoPath) return '';
@@ -96,7 +91,7 @@ export async function fetchProductById(id: string): Promise<Product> {
 
 /** Comenzi */
 export async function createOrder(data: {
-  items: { id: string; quantity: number; color?: string; variantLabel?: string }[];
+  items: { id: string; quantity: number; color?: string }[];
   deliveryAddress: {
     strada: string;
     bloc?: string;
@@ -112,8 +107,7 @@ export async function createOrder(data: {
     items: data.items.map(item => ({
       id: item.id,
       quantity: item.quantity,
-      color: item.color || undefined,
-      variantLabel: item.variantLabel || undefined,
+      color: item.color,
     })),
     deliveryAddress: data.deliveryAddress,
   };

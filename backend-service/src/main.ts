@@ -12,21 +12,8 @@ async function bootstrap() {
   app.use(urlencoded({ limit: '50mb', extended: true }));
 
   // Activare CORS pentru frontend (Next.js)
-  const frontendUrl = process.env.FRONTEND_URL ?? 'http://localhost:3000';
-  const allowedOrigins = [
-    frontendUrl,
-    frontendUrl.replace('https://', 'https://www.'),
-    frontendUrl.replace('https://www.', 'https://'),
-  ].filter((v, i, a) => a.indexOf(v) === i); // deduplicare
-
   app.enableCors({
-    origin: (origin, callback) => {
-      if (!origin || allowedOrigins.includes(origin)) {
-        callback(null, true);
-      } else {
-        callback(new Error(`CORS: Origin ${origin} not allowed`));
-      }
-    },
+    origin: process.env.FRONTEND_URL ?? 'http://localhost:3000',
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'Range', 'Accept-Ranges', 'Content-Range'],
     exposedHeaders: ['Content-Range', 'Accept-Ranges', 'Content-Length'],
