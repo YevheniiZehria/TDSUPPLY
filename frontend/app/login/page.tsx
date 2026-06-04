@@ -4,7 +4,8 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
-const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
+const apiEnv = process.env.NEXT_PUBLIC_API_URL || '';
+const BACKEND_URL = apiEnv.endsWith('/api') ? apiEnv : (apiEnv ? `${apiEnv}/api` : '/api');
 
 const t = {
   ro: {

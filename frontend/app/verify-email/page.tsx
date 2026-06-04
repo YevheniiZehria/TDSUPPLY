@@ -35,7 +35,9 @@ function VerifyEmailContent() {
       return;
     }
 
-    const base = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
+    const apiEnv = process.env.NEXT_PUBLIC_API_URL || '';
+    const base = apiEnv.endsWith('/api') ? apiEnv : (apiEnv ? `${apiEnv}/api` : '/api');
+
     fetch(`${base}/auth/verify-email?token=${token}`)
       .then(async (res) => {
         if (res.ok) {

@@ -100,7 +100,8 @@ function validateCodPostal(cod: string): string {
   return '';
 }
 
-const BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
+const apiEnv = process.env.NEXT_PUBLIC_API_URL || '';
+const BASE = apiEnv.endsWith('/api') ? apiEnv : (apiEnv ? `${apiEnv}/api` : '/api');
 
 function LoginContent() {
   const router = useRouter();

@@ -37,7 +37,8 @@ export default function AdminOrdersPage() {
   async function downloadInvoicePdf(orderId: string) {
     try {
       const token = localStorage.getItem('admin_token');
-      const BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
+      const apiEnv = process.env.NEXT_PUBLIC_API_URL || '';
+      const BASE = apiEnv.endsWith('/api') ? apiEnv : (apiEnv ? `${apiEnv}/api` : '/api');
       const res = await fetch(`${BASE}/orders/${orderId}/pdf/admin`, {
         headers: {
           Authorization: `Bearer ${token}`,
