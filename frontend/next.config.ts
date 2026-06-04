@@ -21,42 +21,6 @@ const nextConfig: NextConfig = {
   async rewrites() {
     return [
       {
-        source: '/auth/:path*',
-        destination: 'http://localhost:3001/auth/:path*',
-      },
-      {
-        source: '/admin/auth/:path*',
-        destination: 'http://localhost:3001/admin/auth/:path*',
-      },
-      {
-        source: '/admin/users-api/:path*',
-        destination: 'http://localhost:3001/admin/users-api/:path*',
-      },
-      {
-        source: '/admin/ping',
-        destination: 'http://localhost:3001/admin/ping',
-      },
-      {
-        source: '/settings/:path*',
-        destination: 'http://localhost:3001/settings/:path*',
-      },
-      {
-        source: '/orders/:path*',
-        destination: 'http://localhost:3001/orders/:path*',
-      },
-      {
-        source: '/products/:path*',
-        destination: 'http://localhost:3001/products/:path*',
-      },
-      {
-        source: '/categories/:path*',
-        destination: 'http://localhost:3001/categories/:path*',
-      },
-      {
-        source: '/uploads/:path*',
-        destination: 'http://localhost:3001/uploads/:path*',
-      },
-      {
         source: '/api/:path*',
         destination: 'http://localhost:3001/api/:path*',
       },

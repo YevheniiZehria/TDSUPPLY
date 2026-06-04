@@ -29,6 +29,9 @@ async function bootstrap() {
     }),
   );
 
+  // Prefix global pentru toate rutele
+  app.setGlobalPrefix('api');
+
   // Configurare Swagger / OpenAPI
   const config = new DocumentBuilder()
     .setTitle('Distrident Medical API')

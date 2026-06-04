@@ -1,6 +1,6 @@
 import type { Product, ProductStats, SiteSettings } from './api';
 
-const BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
+const BASE = process.env.NEXT_PUBLIC_API_URL || '/api';
 
 function getToken(): string {
   if (typeof window === 'undefined') return '';

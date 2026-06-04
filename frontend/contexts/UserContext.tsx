@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useEffect, useState, useCallback, type ReactNode } from 'react';
 
-const BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
+const BASE = process.env.NEXT_PUBLIC_API_URL || '/api';
 
 export interface UserInfo {
   sub: string;
