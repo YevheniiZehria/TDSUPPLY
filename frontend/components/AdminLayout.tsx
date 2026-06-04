@@ -95,6 +95,15 @@ export default function AdminLayout({ children, title }: AdminLayoutProps) {
     );
   }
 
+  // If loading is done but admin is null, don't render anything — redirect is in progress
+  if (!admin) {
+    return (
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', background: '#0f172a', color: '#94a3b8', fontSize: 14 }}>
+        Se redirecționează...
+      </div>
+    );
+  }
+
   return (
     <div className="admin-shell">
       {/* Sidebar */}
@@ -115,7 +124,7 @@ export default function AdminLayout({ children, title }: AdminLayoutProps) {
             <Link
               key={item.href}
               href={item.href}
-              className={`admin-nav-item ${pathname === item.href ? 'active' : ''} ${item.accent ? 'accent' : ''}`}
+            className={`admin-nav-item ${(item.href === '/admin' ? pathname === item.href : pathname.startsWith(item.href)) ? 'active' : ''} ${item.accent ? 'accent' : ''}`}
             >
               <span className="admin-nav-icon">{item.icon}</span>
               {sidebarOpen && <span className="admin-nav-label">{item.label}</span>}

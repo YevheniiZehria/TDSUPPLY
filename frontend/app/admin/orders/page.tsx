@@ -63,6 +63,7 @@ export default function AdminOrdersPage() {
 
   const statusColors: Record<string, string> = {
     pending: '#eab308',
+    confirmed: '#3b82f6',
     processing: '#3b82f6',
     shipped: '#a855f7',
     delivered: '#22c55e',
@@ -93,7 +94,7 @@ export default function AdminOrdersPage() {
             <tbody>
               {orders.map(order => (
                 <tr key={order.id}>
-                  <td style={{ fontWeight: 600 }}>#{order.id.split('-')[1]}</td>
+                  <td style={{ fontWeight: 600 }}>#{order.id.slice(0, 8).toUpperCase()}</td>
                   <td>
                     <div style={{ fontWeight: 500 }}>{order.userName}</div>
                     <div style={{ fontSize: 12, opacity: 0.7 }}>{order.userEmail}</div>
