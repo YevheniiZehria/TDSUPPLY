@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Put, Delete, Body, Param, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Put, Delete, Body, Param, UseGuards, HttpCode } from '@nestjs/common';
 import { CategoriesService } from './categories.service';
 import { CreateCategoryDto, UpdateCategoryDto } from './dtos/category.dto';
 import { ApiTags, ApiOperation } from '@nestjs/swagger';
@@ -42,8 +42,9 @@ export class CategoriesController {
   @Delete(':id')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('admin')
+  @HttpCode(204)
   @ApiOperation({ summary: 'Șterge o categorie (Admin)' })
-  remove(@Param('id') id: string) {
-    return this.categoriesService.remove(id);
+  async remove(@Param('id') id: string): Promise<void> {
+    await this.categoriesService.remove(id);
   }
 }

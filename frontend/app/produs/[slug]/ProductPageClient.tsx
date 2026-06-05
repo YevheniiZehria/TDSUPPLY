@@ -116,8 +116,12 @@ export default function ProductPageClient({ slug }: { slug: string }) {
 
   function handleAddCart() {
     if (!product) return;
-    if (hasColors && !selectedColor) return;
-    addItem(product, lang, selectedVariant, selectedColor);
+    // Fallback: dacă selectedColor e null dar produsul are culori, luăm prima culoare automat
+    const effectiveColor = hasColors
+      ? (selectedColor ?? product.colors![0])
+      : null;
+    if (hasColors && !effectiveColor) return;
+    addItem(product, lang, selectedVariant, effectiveColor);
     setAdded(true);
     setTimeout(() => setAdded(false), 2000);
   }
@@ -379,8 +383,8 @@ export default function ProductPageClient({ slug }: { slug: string }) {
                   <button
                     className={`product-cta-primary ${added ? 'added' : ''}`}
                     onClick={handleAddCart}
-                    disabled={(selectedVariant ? (selectedVariant.inStock === false && selectedVariant.isPreorder === false) : (!product.inStock && !product.isPreorder)) || (hasColors && !selectedColor)}
-                    style={{ opacity: ((selectedVariant ? (selectedVariant.inStock === false && selectedVariant.isPreorder === false) : (!product.inStock && !product.isPreorder)) || (hasColors && !selectedColor)) ? 0.5 : 1, cursor: ((selectedVariant ? (selectedVariant.inStock === false && selectedVariant.isPreorder === false) : (!product.inStock && !product.isPreorder)) || (hasColors && !selectedColor)) ? 'not-allowed' : 'pointer' }}
+                    disabled={(selectedVariant ? (selectedVariant.inStock === false && selectedVariant.isPreorder === false) : (!product.inStock && !product.isPreorder))}
+                    style={{ opacity: ((selectedVariant ? (selectedVariant.inStock === false && selectedVariant.isPreorder === false) : (!product.inStock && !product.isPreorder))) ? 0.5 : 1, cursor: ((selectedVariant ? (selectedVariant.inStock === false && selectedVariant.isPreorder === false) : (!product.inStock && !product.isPreorder))) ? 'not-allowed' : 'pointer' }}
                   >
                     {added ? (
                       <>

@@ -79,9 +79,13 @@ export function CartProvider({ children }: { children: ReactNode }) {
   }, [hydrated, items]);
 
   const addItem = useCallback((product: Product, lang: 'ro' | 'en', variant?: ProductVariant | null, color?: string | null) => {
+    // Fallback de siguranță: dacă produsul are culori dar nu s-a transmis nicio culoare,
+    // folosim automat prima culoare disponibilă pentru a evita eroarea backend-ului
+    const effectiveColor = color ?? (product.colors && product.colors.length > 0 ? product.colors[0] : null);
+
     setItems((current) => {
       let itemId = variant ? `${product.id}-${variant.label}` : product.id;
-      if (color) itemId += `-${color}`;
+      if (effectiveColor) itemId += `-${effectiveColor}`;
       const existing = current.find((item) => item.id === itemId);
       if (existing) {
         return current.map((item) =>
@@ -91,8 +95,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
       const itemPrice = variant ? variant.price : product.price;
       let itemName = variant ? `${product.name[lang]} (${variant.label})` : product.name[lang];
-      if (color) {
-        itemName += ` - ${lang === 'ro' ? 'Nuanță' : 'Shade'}: ${color}`;
+      if (effectiveColor) {
+        itemName += ` - ${lang === 'ro' ? 'Nuanță' : 'Shade'}: ${effectiveColor}`;
       }
       const itemInStock = variant ? (variant.inStock !== false && product.inStock) : product.inStock;
 
@@ -109,7 +113,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
           quantity: 1,
           variantLabel: variant?.label,
           inStock: itemInStock,
-          color: color || undefined,
+          color: effectiveColor || undefined,
         },
       ];
     });
